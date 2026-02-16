@@ -1,0 +1,31 @@
+[package]
+name = "rustydialogs"
+version = "0.1.0"
+authors = ["Casper <CasualX@users.noreply.github.com>"]
+edition = "2021"
+license = "MIT"
+
+description = "Provides a simple and cross-platform way to display native dialog boxes."
+documentation = "https://docs.rs/rustydialogs"
+repository = "https://github.com/CasualX/rustydialogs"
+keywords = ["dialog", "ui", "message", "file"]
+categories = ["gui"]
+
+[lib]
+name = "rustydialogs"
+path = "src/lib.rs"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+windows.version = "0.58"
+windows.features = [
+	"Win32_Foundation",
+	"Win32_System_Com",
+	"Win32_System_LibraryLoader",
+	"Win32_UI_Controls_Dialogs",
+	"Win32_UI_Shell",
+	"Win32_UI_Shell_Common",
+	"Win32_UI_WindowsAndMessaging",
+]
