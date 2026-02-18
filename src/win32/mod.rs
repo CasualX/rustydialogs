@@ -1,4 +1,8 @@
 use std::fmt::Write;
+use std::path::{Path, PathBuf};
+use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+use windows::Win32::Foundation::HWND;
+
 use super::*;
 
 mod file;
@@ -12,7 +16,15 @@ fn utf16_null_terminated(value: &str) -> Vec<u16> {
 	value.encode_utf16().chain(std::iter::once(0)).collect()
 }
 
-pub fn show(p: &MessageBox<'_>) -> Option<MessageResult> {
+fn hwnd(owner: Option<&dyn HasWindowHandle>) -> Option<HWND> {
+	let raw = owner.and_then(|w| w.window_handle().ok()).map(|h| h.as_raw());
+	match raw {
+		Some(RawWindowHandle::Win32(handle)) => Some(HWND(handle.hwnd.get() as *mut core::ffi::c_void)),
+		_ => None,
+	}
+}
+
+pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 	message::show(p)
 }
 

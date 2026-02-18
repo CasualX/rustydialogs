@@ -72,7 +72,7 @@ static BACKEND: sync::LazyLock<Backend> = sync::LazyLock::new(|| {
 });
 
 
-pub fn show(p: &MessageBox<'_>) -> Option<MessageResult> {
+pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 	match *BACKEND {
 		Backend::KDialog => kdialog::message_box(p),
 		Backend::Zenity => zenity::message_box(p),

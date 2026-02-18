@@ -5,11 +5,9 @@ use windows::Win32::UI::Controls::Dialogs::{
 };
 
 use super::*;
-use std::path::{Path, PathBuf};
 
 pub fn pick_file(p: &FileDialog<'_>) -> Option<PathBuf> {
-	pick_files_impl(p, false)
-		.and_then(|mut paths| if paths.is_empty() { None } else { Some(paths.remove(0)) })
+	pick_files_impl(p, false).and_then(|paths| paths.into_iter().next())
 }
 
 pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
@@ -28,6 +26,7 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	if let Some(filter) = &filter {
 		open_file_name.lpstrFilter = PCWSTR(filter.as_ptr());
 	}
+	open_file_name.hwndOwner = hwnd(p.owner).unwrap_or_default();
 	open_file_name.lpstrFile = PWSTR(file_buffer.as_mut_ptr());
 	open_file_name.nMaxFile = file_buffer.len() as u32;
 	open_file_name.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
@@ -52,29 +51,20 @@ fn pick_files_impl(p: &FileDialog<'_>, allow_multiple_selects: bool) -> Option<V
 	if let Some(filter) = &filter {
 		open_file_name.lpstrFilter = PCWSTR(filter.as_ptr());
 	}
+	open_file_name.hwndOwner = hwnd(p.owner).unwrap_or_default();
 	open_file_name.lpstrFile = PWSTR(file_buffer.as_mut_ptr());
 	open_file_name.nMaxFile = file_buffer.len() as u32;
-	open_file_name.Flags = OFN_EXPLORER
-		| OFN_NOCHANGEDIR
-		| OFN_PATHMUSTEXIST
-		| OFN_FILEMUSTEXIST
-		| if allow_multiple_selects {
-			OFN_ALLOWMULTISELECT
-		} else {
-			Default::default()
-		};
+	open_file_name.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	if allow_multiple_selects {
+		open_file_name.Flags |= OFN_ALLOWMULTISELECT;
+	}
 
 	let selected = unsafe { GetOpenFileNameW(&mut open_file_name).as_bool() };
 	if !selected {
 		return None;
 	}
 
-	let paths = parse_open_file_buffer(&file_buffer);
-	if paths.is_empty() {
-		None
-	} else {
-		Some(paths)
-	}
+	parse_open_file_buffer(&file_buffer)
 }
 
 fn initial_file_buffer(default_path_and_file: Option<&Path>) -> Vec<u16> {
@@ -126,7 +116,7 @@ fn wide_to_string_until_nul(input: &[u16]) -> Option<PathBuf> {
 	Some(PathBuf::from(String::from_utf16_lossy(&input[..length])))
 }
 
-fn parse_open_file_buffer(input: &[u16]) -> Vec<PathBuf> {
+fn parse_open_file_buffer(input: &[u16]) -> Option<Vec<PathBuf>> {
 	let mut segments = Vec::new();
 	let mut start = 0usize;
 
@@ -143,17 +133,21 @@ fn parse_open_file_buffer(input: &[u16]) -> Vec<PathBuf> {
 		start = index + 1;
 	}
 
+	// No files were selected somehow
 	if segments.is_empty() {
-		return Vec::new();
+		return None;
 	}
 
+	// Only a single file was selected
+	// The buffer contains the full path and file name
 	if segments.len() == 1 {
-		return vec![segments.remove(0)];
+		return Some(segments);
 	}
 
-	let directory = segments.remove(0);
-	segments
-		.iter()
-		.map(|file_name| directory.join(file_name))
-		.collect()
+	// Multiple files were selected
+	// The first segment is the directory and the following segments are the file names
+	let mut segments = segments.into_iter();
+	let directory = segments.next().unwrap();
+	let full_paths = segments.map(|file_name| directory.join(file_name)).collect();
+	Some(full_paths)
 }

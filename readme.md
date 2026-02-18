@@ -58,7 +58,7 @@ Override the default dialog program by setting the `RUSTY_DIALOGS_BACKEND` envir
 On macOS, the dialogs are implemented using `osascript` (AppleScript).
 Some behaviors are best-effort due to native AppleScript limitations:
 
-- `TextInputMode::Multi` currently falls back to a single input dialog.
+- `TextInputMode::MultiLine` currently falls back to a single input dialog.
 - Notification timeout is controlled by the OS and may ignore `NotifyPopup::timeout`.
 
 Development

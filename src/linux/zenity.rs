@@ -181,8 +181,8 @@ fn filter_strings(filter: Option<&[FileFilter<'_>]>) -> Vec<String> {
 
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 	match p.mode {
-		TextInputMode::Single => text_input_single(p),
-		TextInputMode::Multi => text_input_multi(p),
+		TextInputMode::SingleLine => text_input_single(p),
+		TextInputMode::MultiLine => text_input_multi(p),
 		TextInputMode::Password => text_input_password(p),
 	}
 }

@@ -140,8 +140,8 @@ fn filter_string(filter: Option<&[FileFilter<'_>]>) -> String {
 
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 	let args: &[&OsStr] = match p.mode {
-		TextInputMode::Single => &[os("--inputbox"), os(p.message), os(p.value), os("--title"), os(p.title)],
-		TextInputMode::Multi => &[os("--textinputbox"), os(p.message), os(p.value), os("--title"), os(p.title)],
+		TextInputMode::SingleLine => &[os("--inputbox"), os(p.message), os(p.value), os("--title"), os(p.title)],
+		TextInputMode::MultiLine => &[os("--textinputbox"), os(p.message), os(p.value), os("--title"), os(p.title)],
 		TextInputMode::Password => &[os("--password"), os(p.message), os("--title"), os(p.title)],
 	};
 	let (status, output) = invoke_output("kdialog", args);

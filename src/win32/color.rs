@@ -1,8 +1,9 @@
-use super::*;
 use windows::Win32::Foundation::COLORREF;
 use windows::Win32::UI::Controls::Dialogs::{
 	ChooseColorW, CHOOSECOLORW, CC_FULLOPEN, CC_RGBINIT,
 };
+
+use super::*;
 
 pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 	let mut custom_colors = [COLORREF(0); 16];
@@ -10,6 +11,7 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 
 	let mut picker = CHOOSECOLORW::default();
 	picker.lStructSize = std::mem::size_of::<CHOOSECOLORW>() as u32;
+	picker.hwndOwner = hwnd(p.owner).unwrap_or_default();
 	picker.rgbResult = initial;
 	picker.lpCustColors = custom_colors.as_mut_ptr();
 	picker.Flags = CC_RGBINIT | CC_FULLOPEN;

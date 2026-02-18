@@ -3,7 +3,7 @@ use std::process;
 
 use super::*;
 
-pub fn show(p: &MessageBox<'_>) -> Option<MessageResult> {
+pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 	let icon = match p.icon {
 		MessageIcon::Info | MessageIcon::Question => "note",
 		MessageIcon::Warning => "caution",

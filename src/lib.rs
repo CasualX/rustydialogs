@@ -1,4 +1,5 @@
 use std::path::Path;
+use raw_window_handle::HasWindowHandle;
 
 mod utils;
 
@@ -42,7 +43,7 @@ pub enum MessageResult {
 }
 
 /// Message box dialog.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub struct MessageBox<'a> {
 	/// The title of the dialog.
 	pub title: &'a str,
@@ -52,12 +53,22 @@ pub struct MessageBox<'a> {
 	pub icon: MessageIcon,
 	/// The buttons to show in the dialog.
 	pub buttons: MessageButtons,
+	/// The owner window of the dialog.
+	pub owner: Option<&'a dyn HasWindowHandle>,
 }
 
 impl<'a> MessageBox<'a> {
 	/// Show the dialog.
+	///
+	/// # Linux
+	///
+	/// When the window is dismissed by clicking the close button, the result is `None`.
+	///
+	/// # Windows
+	///
+	/// When the window is dismissed by clicking the close button, the result is Some with the rejective button, e.g. `Some(MessageResult::Cancel)` for [`MessageButtons::OkCancel`] or `Some(MessageResult::No)` for [`MessageButtons::YesNo`].
 	pub fn show(&self) -> Option<MessageResult> {
-		show(self)
+		message_box(self)
 	}
 }
 
@@ -74,7 +85,7 @@ pub struct FileFilter<'a> {
 /// File dialog.
 ///
 /// The file dialog allows the user to select a file or multiple files, or to specify a file name for saving.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub struct FileDialog<'a> {
 	/// The title of the dialog.
 	pub title: &'a str,
@@ -88,6 +99,8 @@ pub struct FileDialog<'a> {
 	pub file_name: Option<&'a Path>,
 	/// An optional list of file filters to show in the file dialog.
 	pub filter: Option<&'a [FileFilter<'a>]>,
+	/// The owner window of the dialog.
+	pub owner: Option<&'a dyn HasWindowHandle>,
 }
 
 impl<'a> FileDialog<'a> {
@@ -110,11 +123,14 @@ impl<'a> FileDialog<'a> {
 /// Folder dialog.
 ///
 /// The folder dialog allows the user to select a folder or directory.
+#[derive(Copy, Clone)]
 pub struct FolderDialog<'a> {
 	/// The title of the dialog.
 	pub title: &'a str,
 	/// The initial directory to show in the folder dialog.
 	pub directory: Option<&'a Path>,
+	/// The owner window of the dialog.
+	pub owner: Option<&'a dyn HasWindowHandle>,
 }
 
 impl<'a> FolderDialog<'a> {
@@ -128,9 +144,9 @@ impl<'a> FolderDialog<'a> {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum TextInputMode {
 	/// Single line text input dialog.
-	Single,
+	SingleLine,
 	/// Multi-line text input dialog.
-	Multi,
+	MultiLine,
 	/// Password input dialog, which hides the input text.
 	Password,
 }
@@ -138,7 +154,7 @@ pub enum TextInputMode {
 /// Text input dialog.
 ///
 /// The text input dialog allows the user to enter text, which is returned as a string.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub struct TextInput<'a> {
 	/// The title of the dialog.
 	pub title: &'a str,
@@ -148,6 +164,8 @@ pub struct TextInput<'a> {
 	pub value: &'a str,
 	/// The mode of the text input, which determines the type of dialog shown and how the input is handled.
 	pub mode: TextInputMode,
+	/// The owner window of the dialog.
+	pub owner: Option<&'a dyn HasWindowHandle>,
 }
 
 impl<'a> TextInput<'a> {
@@ -174,12 +192,14 @@ pub struct ColorValue {
 ///
 /// The color picker dialog allows the user to select a color, which is returned as an RGB value.
 /// The dialog may also show a palette of predefined colors for the user to choose from.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub struct ColorPicker<'a> {
 	/// The title of the dialog.
 	pub title: &'a str,
 	/// The initial color value to show in the color picker dialog.
 	pub value: ColorValue,
+	/// The owner window of the dialog.
+	pub owner: Option<&'a dyn HasWindowHandle>,
 }
 
 impl<'a> ColorPicker<'a> {

@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use windows::core::{PCWSTR, PWSTR};
 use windows::Win32::Foundation::{HWND, LPARAM, MAX_PATH, WPARAM};
 use windows::Win32::System::Com::CoTaskMemFree;
@@ -23,7 +21,7 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 
 	let mut display_name = vec![0u16; (MAX_PATH as usize) + 1];
 	let mut browse_info = BROWSEINFOW::default();
-	browse_info.hwndOwner = HWND::default();
+	browse_info.hwndOwner = hwnd(p.owner).unwrap_or_default();
 	browse_info.pszDisplayName = PWSTR(display_name.as_mut_ptr());
 	browse_info.lpszTitle = PCWSTR(title.as_ptr());
 	browse_info.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
@@ -69,8 +67,8 @@ unsafe extern "system" fn folder_browse_callback(
 			let _ = SendMessageW(
 				hwnd,
 				BFFM_SETSELECTIONW,
-				WPARAM(1),
-				LPARAM(initial_path as isize),
+				Some(WPARAM(1)),
+				Some(LPARAM(initial_path as isize)),
 			);
 		}
 	}
