@@ -1,0 +1,39 @@
+use super::*;
+
+pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+	ensure_gtk_initialized();
+
+	let title = cstring(p.title);
+	let accept = c"Select";
+	let cancel = c"Cancel";
+
+	let native = unsafe {
+		gtk_sys::gtk_file_chooser_native_new(
+			title.as_ptr(),
+			ptr::null_mut(),
+			gtk_sys::GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+			accept.as_ptr(),
+			cancel.as_ptr(),
+		)
+	};
+	let chooser = native as *mut gtk_sys::GtkFileChooser;
+
+	unsafe {
+		if let Some(directory) = p.directory {
+			let c_path = cstring(directory.to_string_lossy().as_ref());
+			gtk_sys::gtk_file_chooser_set_current_folder(chooser, c_path.as_ptr());
+		}
+	}
+
+	let response = unsafe { gtk_sys::gtk_native_dialog_run(native as *mut gtk_sys::GtkNativeDialog) };
+	if response != gtk_sys::GTK_RESPONSE_ACCEPT {
+		unsafe { g_object_unref(native as *mut _) };
+		return None;
+	}
+
+	let filename = unsafe { gtk_sys::gtk_file_chooser_get_filename(chooser) };
+	let result = c_to_path_buf(filename);
+
+	unsafe { g_object_unref(native as *mut _) };
+	result
+}

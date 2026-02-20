@@ -25,3 +25,6 @@ jobs:
 
       - name: Cargo check examples
         run: cargo check --examples
+
+      - name: Cargo check (GTK3)
+        run: cargo check --examples --features gtk3

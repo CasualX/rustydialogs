@@ -48,10 +48,14 @@ On Windows, the library uses the built-in Windows API to display native dialog b
 
 ### Linux
 
-On Linux, the dialogs are implemented using `zenity` or `kdialog`.
-It will try to choose a reasonable dialog program based on the desktop environment.
+On Linux, `gtk3` is an optional feature.
+When enabled, Rusty Dialogs uses the GTK3 backend by default.
+
+Without the `gtk3` feature, Rusty Dialogs uses `zenity` or `kdialog` and tries to choose a reasonable program based on the desktop environment.
 If neither is available, the library will panic.
-Override the default dialog program by setting the `RUSTY_DIALOGS_BACKEND` environment variable to either `zenity` or `kdialog`.
+
+You can override backend selection with the `RUSTY_DIALOGS_BACKEND` environment variable.
+Supported values are `gtk3`, `zenity`, and `kdialog`.
 
 ### macOS
 
