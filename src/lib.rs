@@ -253,9 +253,9 @@ mod linux;
 use linux::*;
 
 #[cfg(windows)]
-mod win32;
+mod windows;
 #[cfg(windows)]
-use win32::*;
+use windows::*;
 
 #[cfg(target_os = "macos")]
 mod macos;

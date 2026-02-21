@@ -44,7 +44,7 @@ A reasonable effort is made to support the following platforms:
 
 ### Windows
 
-On Windows, the library uses the built-in Windows API to display native dialog boxes.
+On Windows, the library uses the legacy Win32-based common dialogs API to display native dialog boxes.
 
 ### Linux
 
