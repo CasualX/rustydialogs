@@ -48,14 +48,19 @@ On Windows, the library uses the built-in Windows API to display native dialog b
 
 ### Linux
 
-On Linux, `gtk3` is an optional feature.
-When enabled, Rusty Dialogs uses the GTK3 backend by default.
+On Linux, `gtk4` and `gtk3` are optional features.
+Do not enable both in the same binary: GTK performs a runtime check for mixed major versions and will abort if `gtk3` and `gtk4` are linked together.
 
-Without the `gtk3` feature, Rusty Dialogs uses `zenity` or `kdialog` and tries to choose a reasonable program based on the desktop environment.
+When enabled, Rusty Dialogs prefers backends in this order:
+
+1. `gtk4` / `gtk3`
+2. `zenity` / `kdialog`
+
+Without `gtk4` and `gtk3`, Rusty Dialogs uses `zenity` or `kdialog` and tries to choose a reasonable program based on the desktop environment.
 If neither is available, the library will panic.
 
 You can override backend selection with the `RUSTY_DIALOGS_BACKEND` environment variable.
-Supported values are `gtk3`, `zenity`, and `kdialog`.
+Supported values are `gtk4`, `gtk3`, `zenity`, and `kdialog`.
 
 ### macOS
 

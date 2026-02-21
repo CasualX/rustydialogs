@@ -11,12 +11,17 @@ mod zenity;
 #[cfg(feature = "gtk3")]
 mod gtk3;
 
+#[cfg(feature = "gtk4")]
+mod gtk4;
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 enum Backend {
 	KDialog,
 	Zenity,
 	#[cfg(feature = "gtk3")]
 	Gtk3,
+	#[cfg(feature = "gtk4")]
+	Gtk4,
 }
 
 static BACKEND: sync::LazyLock<Backend> = sync::LazyLock::new(|| {
@@ -37,17 +42,26 @@ static BACKEND: sync::LazyLock<Backend> = sync::LazyLock::new(|| {
 		match backend {
 			b"kdialog" => return Backend::KDialog,
 			b"zenity" => return Backend::Zenity,
+			#[cfg(feature = "gtk4")]
+			b"gtk4" => return Backend::Gtk4,
 			#[cfg(feature = "gtk3")]
 			b"gtk3" => return Backend::Gtk3,
 			_ => panic!("Invalid RUSTY_DIALOGS_BACKEND value: {backend:?}", backend = str::from_utf8(backend).unwrap_or("<invalid utf-8>")),
 		}
 	}
 
+	#[allow(unreachable_code)]
+	#[cfg(feature = "gtk4")] {
+		return Backend::Gtk4;
+	}
+
+	#[allow(unreachable_code)]
 	#[cfg(feature = "gtk3")] {
 		return Backend::Gtk3;
 	}
 
-	#[cfg(not(feature = "gtk3"))] {
+	#[allow(unreachable_code)]
+	#[cfg(not(any(feature = "gtk4", feature = "gtk3")))] {
 		fn isenv(key: &std::ffi::CStr) -> bool {
 			unsafe { !libc::getenv(key.as_ptr()).is_null() }
 		}
@@ -92,6 +106,8 @@ pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 		Backend::Zenity => zenity::message_box(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::message_box(p),
+		#[cfg(feature = "gtk4")]
+		Backend::Gtk4 => gtk4::message_box(p),
 	}
 }
 
@@ -101,6 +117,8 @@ pub fn pick_file(p: &FileDialog<'_>) -> Option<path::PathBuf> {
 		Backend::Zenity => zenity::pick_file(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::pick_file(p),
+		#[cfg(feature = "gtk4")]
+		Backend::Gtk4 => gtk4::pick_file(p),
 	}
 }
 
@@ -110,6 +128,8 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<path::PathBuf>> {
 		Backend::Zenity => zenity::pick_files(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::pick_files(p),
+		#[cfg(feature = "gtk4")]
+		Backend::Gtk4 => gtk4::pick_files(p),
 	}
 }
 
@@ -119,6 +139,8 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<path::PathBuf> {
 		Backend::Zenity => zenity::save_file(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::save_file(p),
+		#[cfg(feature = "gtk4")]
+		Backend::Gtk4 => gtk4::save_file(p),
 	}
 }
 
@@ -128,6 +150,8 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<path::PathBuf> {
 		Backend::Zenity => zenity::folder_dialog(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::folder_dialog(p),
+		#[cfg(feature = "gtk4")]
+		Backend::Gtk4 => gtk4::folder_dialog(p),
 	}
 }
 
@@ -137,6 +161,8 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 		Backend::Zenity => zenity::text_input(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::text_input(p),
+		#[cfg(feature = "gtk4")]
+		Backend::Gtk4 => gtk4::text_input(p),
 	}
 }
 
@@ -146,6 +172,8 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 		Backend::Zenity => zenity::color_picker(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::color_picker(p),
+		#[cfg(feature = "gtk4")]
+		Backend::Gtk4 => gtk4::color_picker(p),
 	}
 }
 
@@ -155,6 +183,8 @@ pub fn notify_popup(p: &NotifyPopup<'_>) {
 		Backend::Zenity => zenity::notify_popup(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::notify_popup(p),
+		#[cfg(feature = "gtk4")]
+		Backend::Gtk4 => gtk4::notify_popup(p),
 	}
 }
 
