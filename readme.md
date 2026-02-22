@@ -60,7 +60,12 @@ Without `gtk4` and `gtk3`, Rusty Dialogs uses `zenity` or `kdialog` and tries to
 If neither is available, the library will panic.
 
 You can override backend selection with the `RUSTY_DIALOGS_BACKEND` environment variable.
-Supported values are `gtk4`, `gtk3`, `zenity`, and `kdialog`.
+Supported values are `gtk4`, `gtk3`, `xdg-portal`, `zenity`, and `kdialog`.
+
+The `xdg-portal` backend (feature `xdg-portal`) is currently partial:
+
+- Implemented: FileDialog, FolderDialog, NotifyPopup
+- Not implemented in this backend: MessageBox, TextInput, ColorPicker (immediately returns `None`)
 
 ### macOS
 

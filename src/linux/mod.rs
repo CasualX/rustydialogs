@@ -8,6 +8,9 @@ use super::*;
 mod kdialog;
 mod zenity;
 
+#[cfg(feature = "xdg-portal")]
+mod xdg_portal;
+
 #[cfg(feature = "gtk3")]
 mod gtk3;
 
@@ -18,6 +21,8 @@ mod gtk4;
 enum Backend {
 	KDialog,
 	Zenity,
+	#[cfg(feature = "xdg-portal")]
+	XdgPortal,
 	#[cfg(feature = "gtk3")]
 	Gtk3,
 	#[cfg(feature = "gtk4")]
@@ -42,6 +47,8 @@ static BACKEND: sync::LazyLock<Backend> = sync::LazyLock::new(|| {
 		match backend {
 			b"kdialog" => return Backend::KDialog,
 			b"zenity" => return Backend::Zenity,
+			#[cfg(feature = "xdg-portal")]
+			b"xdg-portal" => return Backend::XdgPortal,
 			#[cfg(feature = "gtk4")]
 			b"gtk4" => return Backend::Gtk4,
 			#[cfg(feature = "gtk3")]
@@ -104,6 +111,8 @@ pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 	match *BACKEND {
 		Backend::KDialog => kdialog::message_box(p),
 		Backend::Zenity => zenity::message_box(p),
+		#[cfg(feature = "xdg-portal")]
+		Backend::XdgPortal => xdg_portal::message_box(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::message_box(p),
 		#[cfg(feature = "gtk4")]
@@ -115,6 +124,8 @@ pub fn pick_file(p: &FileDialog<'_>) -> Option<path::PathBuf> {
 	match *BACKEND {
 		Backend::KDialog => kdialog::pick_file(p),
 		Backend::Zenity => zenity::pick_file(p),
+		#[cfg(feature = "xdg-portal")]
+		Backend::XdgPortal => xdg_portal::pick_file(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::pick_file(p),
 		#[cfg(feature = "gtk4")]
@@ -126,6 +137,8 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<path::PathBuf>> {
 	match *BACKEND {
 		Backend::KDialog => kdialog::pick_files(p),
 		Backend::Zenity => zenity::pick_files(p),
+		#[cfg(feature = "xdg-portal")]
+		Backend::XdgPortal => xdg_portal::pick_files(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::pick_files(p),
 		#[cfg(feature = "gtk4")]
@@ -137,6 +150,8 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<path::PathBuf> {
 	match *BACKEND {
 		Backend::KDialog => kdialog::save_file(p),
 		Backend::Zenity => zenity::save_file(p),
+		#[cfg(feature = "xdg-portal")]
+		Backend::XdgPortal => xdg_portal::save_file(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::save_file(p),
 		#[cfg(feature = "gtk4")]
@@ -148,6 +163,8 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<path::PathBuf> {
 	match *BACKEND {
 		Backend::KDialog => kdialog::folder_dialog(p),
 		Backend::Zenity => zenity::folder_dialog(p),
+		#[cfg(feature = "xdg-portal")]
+		Backend::XdgPortal => xdg_portal::folder_dialog(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::folder_dialog(p),
 		#[cfg(feature = "gtk4")]
@@ -159,6 +176,8 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 	match *BACKEND {
 		Backend::KDialog => kdialog::text_input(p),
 		Backend::Zenity => zenity::text_input(p),
+		#[cfg(feature = "xdg-portal")]
+		Backend::XdgPortal => xdg_portal::text_input(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::text_input(p),
 		#[cfg(feature = "gtk4")]
@@ -170,6 +189,8 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 	match *BACKEND {
 		Backend::KDialog => kdialog::color_picker(p),
 		Backend::Zenity => zenity::color_picker(p),
+		#[cfg(feature = "xdg-portal")]
+		Backend::XdgPortal => xdg_portal::color_picker(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::color_picker(p),
 		#[cfg(feature = "gtk4")]
@@ -181,6 +202,8 @@ pub fn notify_popup(p: &NotifyPopup<'_>) {
 	match *BACKEND {
 		Backend::KDialog => kdialog::notify_popup(p),
 		Backend::Zenity => zenity::notify_popup(p),
+		#[cfg(feature = "xdg-portal")]
+		Backend::XdgPortal => xdg_portal::notify_popup(p),
 		#[cfg(feature = "gtk3")]
 		Backend::Gtk3 => gtk3::notify_popup(p),
 		#[cfg(feature = "gtk4")]
