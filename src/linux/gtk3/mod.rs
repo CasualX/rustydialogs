@@ -81,6 +81,17 @@ fn run_dialog(dialog: *mut gtk_sys::GtkWidget) -> i32 {
 	response
 }
 
+fn run_native_dialog(dialog: *mut gtk_sys::GtkNativeDialog) -> i32 {
+	let response = unsafe { gtk_sys::gtk_native_dialog_run(dialog) };
+	unsafe {
+		gtk_sys::gtk_native_dialog_hide(dialog);
+		while gtk_sys::gtk_events_pending() != 0 {
+			gtk_sys::gtk_main_iteration();
+		}
+	}
+	response
+}
+
 fn collect_file_list(list: *mut GSList) -> Vec<PathBuf> {
 	let mut result = Vec::new();
 	let mut node = list;

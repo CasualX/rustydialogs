@@ -62,7 +62,7 @@ fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 
 	apply_file_chooser_defaults(chooser, p, false, multiple);
 
-	let response = unsafe { gtk_sys::gtk_native_dialog_run(native as *mut gtk_sys::GtkNativeDialog) };
+	let response = run_native_dialog(native as *mut gtk_sys::GtkNativeDialog);
 	if response != gtk_sys::GTK_RESPONSE_ACCEPT {
 		unsafe { g_object_unref(native as *mut _) };
 		return None;
@@ -104,7 +104,7 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 
 	apply_file_chooser_defaults(chooser, p, true, false);
 
-	let response = unsafe { gtk_sys::gtk_native_dialog_run(native as *mut gtk_sys::GtkNativeDialog) };
+	let response = run_native_dialog(native as *mut gtk_sys::GtkNativeDialog);
 	if response != gtk_sys::GTK_RESPONSE_ACCEPT {
 		unsafe { g_object_unref(native as *mut _) };
 		return None;

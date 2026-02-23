@@ -25,7 +25,7 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 		}
 	}
 
-	let response = unsafe { gtk_sys::gtk_native_dialog_run(native as *mut gtk_sys::GtkNativeDialog) };
+	let response = run_native_dialog(native as *mut gtk_sys::GtkNativeDialog);
 	if response != gtk_sys::GTK_RESPONSE_ACCEPT {
 		unsafe { g_object_unref(native as *mut _) };
 		return None;
