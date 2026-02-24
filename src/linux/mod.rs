@@ -1,5 +1,5 @@
 use std::{path, process, str, sync};
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
 use std::fmt::Write;
 use std::os::unix::ffi::OsStrExt;
 
@@ -67,8 +67,7 @@ static BACKEND: sync::LazyLock<Backend> = sync::LazyLock::new(|| {
 		return Backend::Gtk3;
 	}
 
-	#[allow(unreachable_code)]
-	#[cfg(not(any(feature = "gtk4", feature = "gtk3")))] {
+	#[allow(unreachable_code)] {
 		fn isenv(key: &std::ffi::CStr) -> bool {
 			unsafe { !libc::getenv(key.as_ptr()).is_null() }
 		}
@@ -97,6 +96,8 @@ static BACKEND: sync::LazyLock<Backend> = sync::LazyLock::new(|| {
 			let program = match backend {
 				Backend::KDialog => "kdialog",
 				Backend::Zenity => "zenity",
+				#[allow(unreachable_patterns)]
+				_ => continue,
 			};
 			if process::Command::new("which").arg(program).output().map(|output| output.status.success()).unwrap_or(false) {
 				return backend;

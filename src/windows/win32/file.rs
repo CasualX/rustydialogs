@@ -17,8 +17,8 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	let title = utf16_null_terminated(p.title);
 	let filter = build_windows_filter(p.filter);
-	let default_path_and_file = default_path_and_file(p);
-	let mut file_buffer = initial_file_buffer(default_path_and_file.as_deref());
+	let path = utils::abspath(p.path);
+	let mut file_buffer = initial_file_buffer(path.as_ref());
 
 	let mut open_file_name = OPENFILENAMEW::default();
 	open_file_name.lStructSize = std::mem::size_of::<OPENFILENAMEW>() as u32;
@@ -42,8 +42,8 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 fn pick_files_impl(p: &FileDialog<'_>, allow_multiple_selects: bool) -> Option<Vec<PathBuf>> {
 	let title = utf16_null_terminated(p.title);
 	let filter = build_windows_filter(p.filter);
-	let default_path_and_file = default_path_and_file(p);
-	let mut file_buffer = initial_file_buffer(default_path_and_file.as_deref());
+	let path = utils::abspath(p.path);
+	let mut file_buffer = initial_file_buffer(path.as_ref());
 
 	let mut open_file_name = OPENFILENAMEW::default();
 	open_file_name.lStructSize = std::mem::size_of::<OPENFILENAMEW>() as u32;
@@ -67,31 +67,16 @@ fn pick_files_impl(p: &FileDialog<'_>, allow_multiple_selects: bool) -> Option<V
 	parse_open_file_buffer(&file_buffer)
 }
 
-fn initial_file_buffer(default_path_and_file: Option<&Path>) -> Vec<u16> {
+fn initial_file_buffer(file: &Path) -> Vec<u16> {
 	let mut buffer = vec![0u16; 16 * 1024];
-	let Some(default_path_and_file) = default_path_and_file else {
-		return buffer;
-	};
-
-	if default_path_and_file.as_os_str().is_empty() {
+	if file.as_os_str().is_empty() {
 		return buffer;
 	}
 
-	let encoded = utf16_null_terminated(&default_path_and_file.to_string_lossy());
+	let encoded = utf16_null_terminated(&file.to_string_lossy());
 	let copy_len = encoded.len().min(buffer.len());
 	buffer[..copy_len].copy_from_slice(&encoded[..copy_len]);
 	buffer
-}
-
-fn default_path_and_file(dialog: &FileDialog<'_>) -> Option<PathBuf> {
-	match (dialog.directory, dialog.file_name) {
-		(Some(dir), Some(file)) if !dir.as_os_str().is_empty() && !file.as_os_str().is_empty() => {
-			Some(dir.join(file))
-		}
-		(Some(dir), _) if !dir.as_os_str().is_empty() => Some(dir.to_path_buf()),
-		(_, Some(file)) if !file.as_os_str().is_empty() => Some(file.to_path_buf()),
-		_ => None,
-	}
 }
 
 fn build_windows_filter(filter: Option<&[FileFilter<'_>]>) -> Option<Vec<u16>> {

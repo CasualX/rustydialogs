@@ -58,10 +58,10 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 
 fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	let filter_string = filter_string(p.filter);
-	let file_path = file_path(p.directory, p.file_name);
+	let file_path = utils::abspath(p.path);
 	let args = [
 		os("--title"), os(p.title),
-		os("--getopenfilename"), &file_path, os(&filter_string),
+		os("--getopenfilename"), file_path.as_os_str(), os(&filter_string),
 		os("--multiple"),
 		os("--separate-output"),
 	];
@@ -79,11 +79,11 @@ fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	let filter_string = filter_string(p.filter);
-	let file_path = file_path(p.directory, p.file_name);
+	let file_path = utils::abspath(p.path);
 
 	let args = [
 		os("--title"), os(p.title),
-		os("--getsavefilename"), &file_path, os(&filter_string),
+		os("--getsavefilename"), file_path.as_os_str(), os(&filter_string),
 	];
 
 	let (code, output) = invoke_output_bytes("kdialog", &args);
@@ -113,16 +113,6 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 		.split(|&b| b == b'\n')
 		.find(|line| !line.is_empty())
 		.map(|line| PathBuf::from(OsStr::from_bytes(line)))
-}
-
-fn file_path(directory: Option<&Path>, file_name: Option<&Path>) -> OsString {
-	let path = match (directory, file_name) {
-		(Some(dir), Some(file)) => dir.join(file),
-		(Some(dir), None) => dir.to_path_buf(),
-		(None, Some(file)) => file.to_path_buf(),
-		(None, None) => PathBuf::from("."),
-	};
-	path.into_os_string()
 }
 
 fn filter_string(filter: Option<&[FileFilter<'_>]>) -> String {

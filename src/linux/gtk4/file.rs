@@ -5,7 +5,7 @@ fn apply_file_chooser_defaults(dialog: *mut gtk4_sys::GtkFileChooser, p: &FileDi
 		gtk4_sys::gtk_file_chooser_set_select_multiple(dialog, multiple as i32);
 		let _ = save;
 
-		if let Some(path) = file_path(p.directory, p.file_name) {
+		if let Some(path) = p.path {
 			let c_path = cstring(path.to_string_lossy().as_ref());
 			let file = gtk4_gio_sys::g_file_new_for_path(c_path.as_ptr());
 			gtk4_sys::gtk_file_chooser_set_file(dialog, file, ptr::null_mut());

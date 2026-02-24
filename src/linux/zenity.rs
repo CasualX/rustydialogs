@@ -1,4 +1,4 @@
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
 use std::os::unix::ffi::OsStrExt;
 use std::path::{Path, PathBuf};
 
@@ -73,13 +73,13 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 }
 
 fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
-	let file_path = file_path(p.directory, p.file_name);
+	let file_path = utils::abspath(p.path);
 	let mut args = vec![
 		os("--file-selection"),
 		os("--title"),
 		os(p.title),
 		os("--filename"),
-		&file_path,
+		file_path.as_os_str(),
 	];
 
 	if multiple {
@@ -106,7 +106,7 @@ fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 }
 
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
-	let file_path = file_path(p.directory, p.file_name);
+	let file_path = utils::abspath(p.path);
 	let mut args = vec![
 		os("--file-selection"),
 		os("--save"),
@@ -114,7 +114,7 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 		os("--title"),
 		os(p.title),
 		os("--filename"),
-		&file_path,
+		file_path.as_os_str(),
 	];
 
 	let filters = filter_strings(p.filter);
@@ -154,16 +154,6 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 		.split(|&byte| byte == b'\n')
 		.find(|line| !line.is_empty())
 		.map(|line| PathBuf::from(OsStr::from_bytes(line)))
-}
-
-fn file_path(directory: Option<&Path>, file_name: Option<&Path>) -> OsString {
-	let path = match (directory, file_name) {
-		(Some(dir), Some(file)) => dir.join(file),
-		(Some(dir), None) => dir.to_path_buf(),
-		(None, Some(file)) => file.to_path_buf(),
-		(None, None) => PathBuf::from("."),
-	};
-	path.into_os_string()
 }
 
 fn filter_strings(filter: Option<&[FileFilter<'_>]>) -> Vec<String> {

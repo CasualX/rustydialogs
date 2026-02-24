@@ -89,14 +89,14 @@ pub struct FileFilter<'a> {
 pub struct FileDialog<'a> {
 	/// The title of the dialog.
 	pub title: &'a str,
-	/// The initial directory to show in the file dialog.
+	/// The initial path to show in the file dialog.
 	///
-	/// If `file_name` is also provided, this is the parent directory of `file_name`.
-	pub directory: Option<&'a Path>,
-	/// The initial file name to show in the file dialog.
+	/// If the path is relative, it is joined with the current working directory.
 	///
-	/// If `directory` is also provided, this is joined with `directory` to form the full initial path and file name.
-	pub file_name: Option<&'a Path>,
+	/// If the resulting path exists and is a directory, no default file name is provided.
+	///
+	/// Otherwise, [`Path::file_name`] is used as the default file name.
+	pub path: Option<&'a Path>,
 	/// An optional list of file filters to show in the file dialog.
 	pub filter: Option<&'a [FileFilter<'a>]>,
 	/// The owner window of the dialog.

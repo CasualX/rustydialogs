@@ -1,21 +1,24 @@
-fn main() {
-	let directory = std::env::current_dir().ok();
+use std::path::Path;
 
+fn main() {
 	let filters = [
 		rustydialogs::FileFilter {
-			desc: "Text files (*.txt)",
+			desc: "Markdown Files (*.md)",
+			patterns: &["*.md"],
+		},
+		rustydialogs::FileFilter {
+			desc: "Text Files (*.txt)",
 			patterns: &["*.txt"],
 		},
 		rustydialogs::FileFilter {
-			desc: "JSON files (*.json)",
+			desc: "JSON Files (*.json)",
 			patterns: &["*.json"],
 		},
 	];
 
 	let dialog = rustydialogs::FileDialog {
 		title: "Open file(s)",
-		directory: directory.as_deref(),
-		file_name: None,
+		path: Some(Path::new("readme.md")),
 		filter: Some(&filters),
 		owner: None,
 	};

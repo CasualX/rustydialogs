@@ -1,4 +1,6 @@
-use std::fmt;
+use std::{env, fmt};
+use std::path::{Path, PathBuf};
+use std::borrow::Cow;
 
 pub struct PrintJoin<'a> {
 	pub parts: &'a [&'a str],
@@ -15,5 +17,19 @@ impl<'a> fmt::Display for PrintJoin<'a> {
 			first = false;
 		}
 		Ok(())
+	}
+}
+
+pub fn abspath(path: Option<&Path>) -> Cow<'_, Path> {
+	match path {
+		Some(path) if path.is_absolute() => Cow::Borrowed(path),
+		Some(path) => {
+			let directory = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+			Cow::Owned(directory.join(path))
+		}
+		None => {
+			let directory = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+			Cow::Owned(directory)
+		}
 	}
 }

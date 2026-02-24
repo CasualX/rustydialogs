@@ -65,7 +65,7 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 }
 
 fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
-	let initial_directory = initial_directory(p.directory, p.file_name)
+	let initial_directory = initial_directory(p.path)
 		.map(|path| path.to_string_lossy().into_owned())
 		.unwrap_or_default();
 
@@ -127,13 +127,11 @@ end run
 }
 
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
-	let initial_directory = initial_directory(p.directory, p.file_name)
+	let (initial_directory, default_name) = initial_directory_and_name(p.path);
+	let initial_directory = initial_directory
 		.map(|path| path.to_string_lossy().into_owned())
 		.unwrap_or_default();
-	let default_name = p.file_name
-		.and_then(|name| name.file_name())
-		.and_then(|name| name.to_str())
-		.unwrap_or("");
+	let default_name = default_name.as_deref().unwrap_or("");
 
 	let script = r#"
 on run argv
@@ -291,12 +289,21 @@ fn invoke_async(script: &str, args: &[&str]) {
 		.unwrap();
 }
 
-fn initial_directory(directory: Option<&Path>, file_name: Option<&Path>) -> Option<PathBuf> {
-	if let Some(directory) = directory {
-		return Some(directory.to_path_buf());
+fn initial_directory(initial_path: Option<&Path>) -> Option<PathBuf> {
+	let (directory, _) = initial_directory_and_name(initial_path);
+	directory
+}
+
+fn initial_directory_and_name(initial_path: Option<&Path>) -> (Option<PathBuf>, Option<String>) {
+	let path = utils::abspath(initial_path);
+
+	if path.is_dir() {
+		return (Some(path.into_owned()), None);
 	}
 
-	file_name.and_then(Path::parent).map(Path::to_path_buf)
+	let directory = path.parent().map(Path::to_path_buf);
+	let file_name = path.file_name().and_then(|name| name.to_str()).map(str::to_string);
+	(directory, file_name)
 }
 
 fn parse_color(value: &str) -> Option<ColorValue> {

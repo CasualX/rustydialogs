@@ -7,7 +7,7 @@ fn apply_file_chooser_defaults(dialog: *mut gtk_sys::GtkFileChooser, p: &FileDia
 			gtk_sys::gtk_file_chooser_set_do_overwrite_confirmation(dialog, 1);
 		}
 
-		if let Some(path) = file_path(p.directory, p.file_name) {
+		if let Some(path) = p.path {
 			let c_path = cstring(path.to_string_lossy().as_ref());
 			gtk_sys::gtk_file_chooser_set_filename(dialog, c_path.as_ptr());
 		}

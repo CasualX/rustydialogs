@@ -1,7 +1,7 @@
 use std::ffi::{CStr, CString, OsStr};
 use std::os::raw::{c_char, c_void};
 use std::os::unix::ffi::OsStrExt;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::{ptr, sync};
 
 use gtk4_gio_sys::{g_file_get_path, g_list_model_get_item, g_list_model_get_n_items, GFile, GListModel};
@@ -182,13 +182,4 @@ fn run_native_dialog(dialog: *mut gtk4_sys::GtkNativeDialog) -> i32 {
 	}
 
 	state.response
-}
-
-fn file_path(directory: Option<&Path>, file_name: Option<&Path>) -> Option<PathBuf> {
-	match (directory, file_name) {
-		(Some(dir), Some(file)) => Some(dir.join(file)),
-		(Some(dir), None) => Some(dir.to_path_buf()),
-		(None, Some(file)) => Some(file.to_path_buf()),
-		(None, None) => None,
-	}
 }

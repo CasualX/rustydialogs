@@ -1,7 +1,7 @@
 use std::ffi::{CStr, CString, OsStr};
 use std::os::raw::c_char;
 use std::os::unix::ffi::OsStrExt;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::{ptr, sync};
 
 use glib_sys::{g_free, g_slist_free, GSList};
@@ -106,13 +106,4 @@ fn collect_file_list(list: *mut GSList) -> Vec<PathBuf> {
 	}
 	unsafe { g_slist_free(list) };
 	result
-}
-
-fn file_path(directory: Option<&Path>, file_name: Option<&Path>) -> Option<PathBuf> {
-	match (directory, file_name) {
-		(Some(dir), Some(file)) => Some(dir.join(file)),
-		(Some(dir), None) => Some(dir.to_path_buf()),
-		(None, Some(file)) => Some(file.to_path_buf()),
-		(None, None) => None,
-	}
 }

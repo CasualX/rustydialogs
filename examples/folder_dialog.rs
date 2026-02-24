@@ -1,9 +1,7 @@
 fn main() {
-	let directory = std::env::current_dir().ok();
-
 	let dialog = rustydialogs::FolderDialog {
 		title: "Select a folder",
-		directory: directory.as_deref(),
+		directory: None,
 		owner: None,
 	};
 
