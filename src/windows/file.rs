@@ -15,7 +15,7 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 }
 
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
-	let title = utf16_null_terminated(p.title);
+	let title = utf16cs(p.title);
 	let filter = build_windows_filter(p.filter);
 	let path = utils::abspath(p.path);
 	let mut file_buffer = initial_file_buffer(path.as_ref());
@@ -40,7 +40,7 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 }
 
 fn pick_files_impl(p: &FileDialog<'_>, allow_multiple_selects: bool) -> Option<Vec<PathBuf>> {
-	let title = utf16_null_terminated(p.title);
+	let title = utf16cs(p.title);
 	let filter = build_windows_filter(p.filter);
 	let path = utils::abspath(p.path);
 	let mut file_buffer = initial_file_buffer(path.as_ref());
@@ -73,7 +73,7 @@ fn initial_file_buffer(file: &Path) -> Vec<u16> {
 		return buffer;
 	}
 
-	let encoded = utf16_null_terminated(&file.to_string_lossy());
+	let encoded = utf16cs(&file.to_string_lossy());
 	let copy_len = encoded.len().min(buffer.len());
 	buffer[..copy_len].copy_from_slice(&encoded[..copy_len]);
 	buffer

@@ -39,13 +39,13 @@ struct InputDialogState {
 }
 
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {
-	let title = utf16_null_terminated(p.title);
+	let title = utf16cs(p.title);
 	let multiline = matches!(p.mode, TextInputMode::MultiLine);
 	let password = matches!(p.mode, TextInputMode::Password);
 	let mut template = build_input_dialog_template(&title, multiline, password);
 	let mut state = InputDialogState {
-		message: utf16_null_terminated(p.message),
-		initial: utf16_null_terminated(p.value),
+		message: utf16cs(p.message),
+		initial: utf16cs(p.value),
 		multiline,
 		fixed_height: 0,
 		result: None,
@@ -248,7 +248,7 @@ fn build_input_dialog_template(title: &[u16], multiline: bool, password: bool) -
 
 	// DS_SETFONT: point size + typeface name
 	push_u16(&mut data, 9); // point size
-	push_utf16z(&mut data, &utf16_null_terminated("MS Shell Dlg 2"));
+	push_utf16z(&mut data, &utf16cs("MS Shell Dlg 2"));
 
 	// Placeholder positions — overwritten immediately in WM_INITDIALOG via layout_controls
 	add_dialog_item(
@@ -278,7 +278,7 @@ fn build_input_dialog_template(title: &[u16], multiline: bool, password: bool) -
 		0, 0, 10, 10,
 		IDOK.0 as u16,
 		0x0080, // BUTTON
-		&utf16_null_terminated("OK"),
+		&utf16cs("OK"),
 	);
 
 	add_dialog_item(
@@ -288,7 +288,7 @@ fn build_input_dialog_template(title: &[u16], multiline: bool, password: bool) -
 		0, 0, 10, 10,
 		IDCANCEL.0 as u16,
 		0x0080, // BUTTON
-		&utf16_null_terminated("Cancel"),
+		&utf16cs("Cancel"),
 	);
 
 	data

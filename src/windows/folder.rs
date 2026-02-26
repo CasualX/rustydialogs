@@ -10,27 +10,16 @@ use windows::Win32::UI::WindowsAndMessaging::SendMessageW;
 use super::*;
 
 pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
-	let title = utf16_null_terminated(p.title);
-	let initial_directory = p.directory.and_then(|path| {
-		if path.as_os_str().is_empty() {
-			None
-		} else {
-			Some(utf16_null_terminated(&path.to_string_lossy()))
-		}
-	});
+	let title = utf16cs(p.title);
 
-	let mut display_name = vec![0u16; (MAX_PATH as usize) + 1];
+	let mut display_name = [0u16; MAX_PATH as usize];
 	let mut browse_info = BROWSEINFOW::default();
 	browse_info.hwndOwner = hwnd(p.owner).unwrap_or_default();
 	browse_info.pszDisplayName = PWSTR(display_name.as_mut_ptr());
 	browse_info.lpszTitle = PCWSTR(title.as_ptr());
 	browse_info.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
 	browse_info.lpfn = Some(folder_browse_callback);
-	browse_info.lParam = LPARAM(
-		initial_directory
-			.as_ref()
-			.map_or(0, |path| path.as_ptr() as isize),
-	);
+	browse_info.lParam = LPARAM((p as *const FolderDialog<'_>).expose_provenance() as isize);
 
 	let item_list = unsafe { SHBrowseForFolderW(&mut browse_info) };
 	if item_list.is_null() {
@@ -43,34 +32,22 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 		CoTaskMemFree(Some(item_list as _));
 	}
 
-	if !ok {
-		return None;
+	if ok {
+		let length = path.iter().position(|value| *value == 0).unwrap_or(path.len());
+		let result = PathBuf::from(String::from_utf16_lossy(&path[..length]));
+		Some(result)
 	}
-
-	let length = path.iter().position(|value| *value == 0).unwrap_or(path.len());
-	if length == 0 {
-		return None;
+	else {
+		None
 	}
-
-	Some(PathBuf::from(String::from_utf16_lossy(&path[..length])))
 }
 
-unsafe extern "system" fn folder_browse_callback(
-	hwnd: HWND,
-	message: u32,
-	_lparam: LPARAM,
-	data: LPARAM,
-) -> i32 {
+unsafe extern "system" fn folder_browse_callback(hwnd: HWND, message: u32, _lparam: LPARAM, data: LPARAM) -> i32 {
+	let p = unsafe { &*std::ptr::with_exposed_provenance::<FolderDialog<'_>>(data.0 as usize) };
 	if message == BFFM_INITIALIZED {
-		let initial_path = data.0 as *const u16;
-		if !initial_path.is_null() {
-			let _ = SendMessageW(
-				hwnd,
-				BFFM_SETSELECTIONW,
-				Some(WPARAM(1)),
-				Some(LPARAM(initial_path as isize)),
-			);
-		}
+		let directory = p.directory.map(|path| utf16cs(&path.to_string_lossy()));
+		let lparam = directory.as_ref().map(|dir| LPARAM(dir.as_ptr().expose_provenance() as isize));
+		let _ = SendMessageW(hwnd, BFFM_SETSELECTIONW, Some(WPARAM(1)), lparam);
 	}
-	0
+	return 0;
 }

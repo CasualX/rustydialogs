@@ -4,16 +4,16 @@
 - `rustydialogs` is a small cross-platform dialog abstraction crate: public API in `src/lib.rs`, platform backends in `src/linux/`, `src/windows/`, and `src/macos/`.
 - `src/lib.rs` defines dialog data types (`MessageBox`, `FileDialog`, `FolderDialog`, `TextInput`, `ColorPicker`, `NotifyPopup`) and thin `show`/`pick_*` methods that delegate to platform functions.
 - Linux backend selection happens once in `src/linux/mod.rs`.
-- Windows uses native Win32 APIs through the `windows` crate; backend dispatch lives in `src/windows/mod.rs` and concrete implementation in `src/windows/win32/`.
+- Windows uses native Win32 APIs through the `windows` crate; backend dispatch and concrete implementation lives in `src/windows/`.
 - macOS uses `osascript`-based implementations in `src/macos/mod.rs`.
 
 ## Architectural Pattern to Follow
 - When adding/changing a dialog type, keep a **three-layer flow**:
   1. Public struct + method in `src/lib.rs`
   2. Platform dispatcher in each platform module (`src/linux/mod.rs`, `src/windows/mod.rs`, `src/macos/mod.rs`)
-  3. Concrete backend implementation files (`src/linux/*.rs`, `src/windows/win32/*.rs`, and macOS logic in `src/macos/mod.rs`)
+  3. Concrete backend implementation files (`src/linux/*.rs`, `src/windows/*.rs`, and macOS logic in `src/macos/mod.rs`)
 - Keep backend functions named consistently (`show`, `pick_file`, `pick_files`, `save_file`, `folder_dialog`, `text_input`, etc.).
-- Prefer focused modules by concern on Windows (`src/windows/win32/file.rs`, `folder.rs`, `message.rs`, `input.rs`, `color.rs`, `notify.rs`).
+- Prefer focused modules by concern on Windows (`src/windows/file.rs`, `folder.rs`, `message.rs`, `input.rs`, `color.rs`, `notify.rs`).
 
 ## Linux Backend Conventions
 - Build command args as `&OsStr` using helper `os(...)` from `src/linux/mod.rs`.

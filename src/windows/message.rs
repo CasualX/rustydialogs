@@ -7,8 +7,8 @@ use windows::Win32::UI::WindowsAndMessaging::{
 use super::*;
 
 pub fn show(p: &MessageBox<'_>) -> Option<MessageResult> {
-	let title = utf16_null_terminated(p.title);
-	let message = utf16_null_terminated(p.message);
+	let title = utf16cs(p.title);
+	let message = utf16cs(p.message);
 	let icon = match p.icon {
 		MessageIcon::Info => MB_ICONINFORMATION,
 		MessageIcon::Warning => MB_ICONWARNING,
