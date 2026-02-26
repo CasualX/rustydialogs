@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use raw_window_handle::HasWindowHandle;
 
 mod utils;
@@ -60,13 +60,15 @@ pub struct MessageBox<'a> {
 impl<'a> MessageBox<'a> {
 	/// Show the dialog.
 	///
-	/// # Linux
+	/// ### Linux
 	///
 	/// When the window is dismissed by clicking the close button, the result is `None`.
 	///
-	/// # Windows
+	/// ### Windows
 	///
-	/// When the window is dismissed by clicking the close button, the result is Some with the rejective button, e.g. `Some(MessageResult::Cancel)` for [`MessageButtons::OkCancel`] or `Some(MessageResult::No)` for [`MessageButtons::YesNo`].
+	/// When the window is dismissed by clicking the close button, the result is Some with the rejective button,
+	/// e.g. `Some(MessageResult::Cancel)` for [`MessageButtons::OkCancel`] or `Some(MessageResult::No)` for [`MessageButtons::YesNo`].
+	#[inline]
 	pub fn show(&self) -> Option<MessageResult> {
 		message_box(self)
 	}
@@ -105,17 +107,20 @@ pub struct FileDialog<'a> {
 
 impl<'a> FileDialog<'a> {
 	/// Show open file dialog, allowing the user to select a single file.
-	pub fn pick_file(&self) -> Option<std::path::PathBuf> {
+	#[inline]
+	pub fn pick_file(&self) -> Option<PathBuf> {
 		pick_file(self)
 	}
 
 	/// Show open file dialog, allowing the user to select multiple files.
-	pub fn pick_files(&self) -> Option<Vec<std::path::PathBuf>> {
+	#[inline]
+	pub fn pick_files(&self) -> Option<Vec<PathBuf>> {
 		pick_files(self)
 	}
 
 	/// Show save file dialog.
-	pub fn save_file(&self) -> Option<std::path::PathBuf> {
+	#[inline]
+	pub fn save_file(&self) -> Option<PathBuf> {
 		save_file(self)
 	}
 }
@@ -135,6 +140,7 @@ pub struct FolderDialog<'a> {
 
 impl<'a> FolderDialog<'a> {
 	/// Show the dialog.
+	#[inline]
 	pub fn show(&self) -> Option<std::path::PathBuf> {
 		folder_dialog(self)
 	}
@@ -172,6 +178,7 @@ impl<'a> TextInput<'a> {
 	/// Show the dialog.
 	///
 	/// Returns `Some(String)` if the user provided input and confirmed the dialog, or `None` if the user cancelled the dialog.
+	#[inline]
 	pub fn show(&self) -> Option<String> {
 		text_input(self)
 	}
@@ -206,32 +213,63 @@ impl<'a> ColorPicker<'a> {
 	/// Show the dialog.
 	///
 	/// Returns `Some(ColorValue)` if the user selected a color and confirmed the dialog, or `None` if the user cancelled the dialog.
+	#[inline]
 	pub fn show(&self) -> Option<ColorValue> {
 		color_picker(self)
 	}
 }
 
-/// Notification popup.
+/// Notification.
 ///
 /// Shows a brief message to the user without blocking their interaction with the application.
 #[derive(Copy, Clone, Debug)]
-pub struct NotifyPopup<'a> {
-	/// The title of the notification popup.
+pub struct Notification<'a> {
+	/// Application identifier used by notification backends.
+	///
+	/// This is a best-effort hint: some backends may ignore it, and some only honor the first value seen by the process/session.
+	pub app_id: &'a str,
+	/// The title of the notification.
 	pub title: &'a str,
-	/// The message to display in the notification popup.
+	/// The message to display in the notification.
 	pub message: &'a str,
-	/// The icon to show in the notification popup.
+	/// The icon to show in the notification.
 	pub icon: MessageIcon,
 	/// Timeout in milliseconds after which the notification should automatically close.
 	///
 	/// A value less than or equal to `0` means that the notification will not automatically close.
+	///
+	/// This is a best-effort hint: some backends may ignore it and use their own default timeout, or may not support timeouts at all.
 	pub timeout: i32,
 }
 
-impl<'a> NotifyPopup<'a> {
-	/// Show the notification popup.
+impl<'a> Notification<'a> {
+	/// Short timeout duration in milliseconds for notification popups.
+	pub const SHORT_TIMEOUT: i32 = 5000;
+	/// Long timeout duration in milliseconds for notification popups.
+	pub const LONG_TIMEOUT: i32 = 10000;
+
+	/// Perform any necessary setup for notifications, such as registering the application with the notification system.
+	///
+	/// This step is optional, when skipped the library will attempt to perform any necessary setup automatically when showing the first notification,
+	/// but this method can be used to ensure that the setup is done at a specific time in the application lifecycle.
+	///
+	/// ### Linux
+	///
+	/// When using the `libnotify` backend, this registers the application with the notification system using the provided application identifier.
+	///
+	/// ### Windows
+	///
+	/// When using the `winrt-toast` backend, this creates a Start Menu shortcut for the application with the provided application identifier, which is required for showing toast notifications on Windows.
+	/// It is recommended to call this method during application initialization before showing any notifications or the first notification may be skipped due to delays in the shortcut creation process.
+	#[inline]
+	pub fn setup(app_id: &str) {
+		notify_setup(app_id)
+	}
+
+	/// Show the notification.
+	#[inline]
 	pub fn show(&self) {
-		notify_popup(self)
+		notify(self)
 	}
 }
 

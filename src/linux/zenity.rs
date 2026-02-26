@@ -1,6 +1,5 @@
 use std::ffi::OsStr;
 use std::os::unix::ffi::OsStrExt;
-use std::path::{Path, PathBuf};
 
 use super::*;
 
@@ -289,7 +288,10 @@ fn parse_color(value: &str) -> Option<ColorValue> {
 
 
 
-pub fn notify_popup(p: &NotifyPopup<'_>) {
+#[allow(dead_code)]
+pub fn notify(p: &Notification<'_>) {
+	// Best effort: zenity notification mode does not expose an application id option.
+
 	let icon = match p.icon {
 		MessageIcon::Info | MessageIcon::Question => "dialog-information",
 		MessageIcon::Warning => "dialog-warning",

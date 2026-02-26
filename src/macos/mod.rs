@@ -1,4 +1,3 @@
-use std::path::{Path, PathBuf};
 use std::process;
 
 use super::*;
@@ -246,16 +245,26 @@ end run
 	parse_color(&output)
 }
 
-pub fn notify_popup(p: &NotifyPopup<'_>) {
+#[inline]
+pub fn notify_setup(_app_id: &str) {
+	// Nothing here yet...
+}
+
+pub fn notify(p: &Notification<'_>) {
+	if p.app_id.is_empty() {
+		return;
+	}
+
 	let script = r#"
 on run argv
 	set theTitle to item 1 of argv
 	set theMessage to item 2 of argv
-	display notification theMessage with title theTitle
+	set theAppId to item 3 of argv
+	display notification theMessage with title theTitle subtitle theAppId
 end run
 "#;
 
-	invoke_async(script, &[p.title, p.message]);
+	invoke_async(script, &[p.title, p.message, p.app_id]);
 }
 
 #[track_caller]

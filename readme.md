@@ -11,27 +11,7 @@ Rusty Dialogs is a Rust library that provides a simple and cross-platform way to
 Dialogs
 -------
 
-The library supports the following types of dialogs:
-
-- MessageBox
-
-  A title, message, icon, and buttons can be specified. The result of the user's choice is returned.
-
-- FileDialog
-
-  A title, directory, file name and filters can be specified. The result of the user's choice is returned.
-
-- TextInput
-
-  A title, message, and default text can be specified. The result of the user's input is returned.
-
-- ColorPicker
-
-  A title and default color can be specified. The result of the user's color selection is returned.
-
-- NotifyPopup
-
-  A title, message, and icon can be specified. The popup is shown as a notification.
+The library supports the following types of dialogs: MessageBox, FileDialog, TextInput, ColorPicker, and Notification.
 
 Platform Support
 ----------------
@@ -45,6 +25,9 @@ A reasonable effort is made to support the following platforms:
 ### Windows
 
 On Windows, the library uses the legacy Win32-based common dialogs API to display native dialog boxes.
+
+For `Notification`, enable feature `winrt-toast` to use WinRT toast notifications.
+Without this feature, Windows notifications use HTA-based implementation.
 
 ### Linux
 
@@ -64,7 +47,7 @@ Supported values are `gtk4`, `gtk3`, `xdg-portal`, `zenity`, and `kdialog`.
 
 The `xdg-portal` backend (feature `xdg-portal`) is currently partial:
 
-- Implemented: FileDialog, FolderDialog, NotifyPopup
+- Implemented: FileDialog, FolderDialog, Notification
 - Not implemented in this backend: MessageBox, TextInput, ColorPicker (immediately returns `None`)
 
 ### macOS
@@ -73,7 +56,7 @@ On macOS, the dialogs are implemented using `osascript` (AppleScript).
 Some behaviors are best-effort due to native AppleScript limitations:
 
 - `TextInputMode::MultiLine` currently falls back to a single input dialog.
-- Notification timeout is controlled by the OS and may ignore `NotifyPopup::timeout`.
+- Notification timeout is controlled by the OS and may ignore `Notification::timeout`.
 
 Development
 -----------

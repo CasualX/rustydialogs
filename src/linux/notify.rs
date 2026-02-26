@@ -1,21 +1,33 @@
+use std::ffi::CString;
+use std::{ptr, sync};
+
 use super::*;
-use std::ptr;
-use std::sync;
 
 static LIBNOTIFY_INITIALIZED: sync::OnceLock<bool> = sync::OnceLock::new();
 
-fn ensure_libnotify_initialized() {
-	let ok = *LIBNOTIFY_INITIALIZED.get_or_init(|| {
-		unsafe { libnotify_sys::notify_init(c"rustydialogs".as_ptr()) != 0 }
+fn cstring(value: &str) -> CString {
+	CString::new(value).unwrap_or_else(|_| CString::new(value.replace('\0', " ")).unwrap())
+}
+
+pub fn init(app_id: &str) -> bool {
+	// Best effort: libnotify initialization is process-global.
+	// Changing app_id after the first initialization may not have any effect.
+	let ok = *LIBNOTIFY_INITIALIZED.get_or_init(move || {
+		let app_id = cstring(app_id);
+		unsafe { libnotify_sys::notify_init(app_id.as_ptr()) != 0 }
 	});
 
 	if !ok {
-		panic!("Failed to initialize libnotify. Ensure a notification service is available.");
+		eprintln!("Failed to initialize libnotify. Ensure a notification service is available.");
 	}
+
+	ok
 }
 
-pub fn notify_popup(p: &NotifyPopup<'_>) {
-	ensure_libnotify_initialized();
+pub fn notify(p: &Notification<'_>) {
+	if !init(p.app_id) {
+		return;
+	}
 
 	let (urgency, icon) = match p.icon {
 		MessageIcon::Info | MessageIcon::Question => (libnotify_sys::NOTIFY_URGENCY_NORMAL, c"dialog-information"),
@@ -43,6 +55,6 @@ pub fn notify_popup(p: &NotifyPopup<'_>) {
 		libnotify_sys::notify_notification_set_urgency(notification, urgency);
 		libnotify_sys::notify_notification_set_timeout(notification, timeout);
 		let _ = libnotify_sys::notify_notification_show(notification, ptr::null_mut());
-		gtk4_gobject_sys::g_object_unref(notification as *mut _);
+		gobject_sys::g_object_unref(notification as *mut _);
 	}
 }

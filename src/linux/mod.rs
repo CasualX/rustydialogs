@@ -8,6 +8,9 @@ use super::*;
 mod kdialog;
 mod zenity;
 
+#[cfg(feature = "libnotify")]
+mod notify;
+
 #[cfg(feature = "xdg-portal")]
 mod xdg_portal;
 
@@ -199,16 +202,36 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 	}
 }
 
-pub fn notify_popup(p: &NotifyPopup<'_>) {
+#[inline]
+pub fn notify_setup(_app_id: &str) {
+	#[cfg(feature = "libnotify")] {
+		notify::init(_app_id);
+	}
+}
+
+pub fn notify(p: &Notification<'_>) {
+	if p.app_id.is_empty() {
+		return;
+	}
+
 	match *BACKEND {
-		Backend::KDialog => kdialog::notify_popup(p),
-		Backend::Zenity => zenity::notify_popup(p),
+		#[cfg(feature = "libnotify")]
+		Backend::KDialog => notify::notify(p),
+		#[cfg(not(feature = "libnotify"))]
+		Backend::KDialog => kdialog::notify(p),
+
+		#[cfg(feature = "libnotify")]
+		Backend::Zenity => notify::notify(p),
+		#[cfg(not(feature = "libnotify"))]
+		Backend::Zenity => zenity::notify(p),
+
 		#[cfg(feature = "xdg-portal")]
-		Backend::XdgPortal => xdg_portal::notify_popup(p),
+		Backend::XdgPortal => xdg_portal::notify(p),
+
 		#[cfg(feature = "gtk3")]
-		Backend::Gtk3 => gtk3::notify_popup(p),
+		Backend::Gtk3 => notify::notify(p),
 		#[cfg(feature = "gtk4")]
-		Backend::Gtk4 => gtk4::notify_popup(p),
+		Backend::Gtk4 => notify::notify(p),
 	}
 }
 

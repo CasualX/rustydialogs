@@ -8,7 +8,7 @@ use super::{
 	FileFilter, FileDialog, FolderDialog,
 	TextInputMode, TextInput,
 	ColorValue, ColorPicker,
-	NotifyPopup,
+	Notification,
 };
 use super::utils;
 
@@ -19,6 +19,9 @@ mod folder;
 mod input;
 mod message;
 mod color;
+#[cfg(feature = "winrt-toast")]
+mod toast;
+#[cfg(not(feature = "winrt-toast"))]
 mod notify;
 
 fn utf16cs(value: &str) -> Vec<u16> {
@@ -36,34 +39,54 @@ fn hwnd(owner: Option<&dyn HasWindowHandle>) -> Option<HWND> {
 	}
 }
 
+#[inline]
 pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 	message::show(p)
 }
 
+#[inline]
 pub fn pick_file(p: &FileDialog<'_>) -> Option<std::path::PathBuf> {
 	file::pick_file(p)
 }
 
+#[inline]
 pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<std::path::PathBuf>> {
 	file::pick_files(p)
 }
 
+#[inline]
 pub fn save_file(p: &FileDialog<'_>) -> Option<std::path::PathBuf> {
 	file::save_file(p)
 }
 
+#[inline]
 pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<std::path::PathBuf> {
 	folder::folder_dialog(p)
 }
 
+#[inline]
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 	input::text_input(p)
 }
 
+#[inline]
 pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 	color::color_picker(p)
 }
 
-pub fn notify_popup(p: &NotifyPopup<'_>) {
-	notify::notify_popup(p)
+#[inline]
+pub fn notify_setup(_app_id: &str) {
+	#[cfg(feature = "winrt-toast")] {
+		toast::setup(_app_id)
+	}
+}
+
+#[inline]
+pub fn notify(p: &Notification<'_>) {
+	#[cfg(feature = "winrt-toast")] {
+		toast::notify(p)
+	}
+	#[cfg(not(feature = "winrt-toast"))] {
+		notify::notify(p)
+	}
 }

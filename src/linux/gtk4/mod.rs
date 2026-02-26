@@ -1,7 +1,6 @@
 use std::ffi::{CStr, CString, OsStr};
 use std::os::raw::{c_char, c_void};
 use std::os::unix::ffi::OsStrExt;
-use std::path::PathBuf;
 use std::{ptr, sync};
 
 use gtk4_gio_sys::{g_file_get_path, g_list_model_get_item, g_list_model_get_n_items, GFile, GListModel};
@@ -15,7 +14,6 @@ mod file;
 mod folder;
 mod input;
 mod message;
-mod notify;
 
 pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 	message::show(p)
@@ -43,10 +41,6 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 
 pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 	color::color_picker(p)
-}
-
-pub fn notify_popup(p: &NotifyPopup<'_>) {
-	notify::notify_popup(p)
 }
 
 static GTK_INITIALIZED: sync::OnceLock<bool> = sync::OnceLock::new();

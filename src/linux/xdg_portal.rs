@@ -1,7 +1,5 @@
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::os::unix::ffi::OsStrExt;
-use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc;
 use std::{thread, time};
@@ -263,14 +261,14 @@ pub fn color_picker(_: &ColorPicker<'_>) -> Option<ColorValue> {
 	None
 }
 
-pub fn notify_popup(p: &NotifyPopup<'_>) {
+pub fn notify(p: &Notification<'_>) {
 	let conn = match Connection::new_session() {
 		Ok(conn) => conn,
 		Err(_) => return,
 	};
 	let proxy = conn.with_proxy(DESKTOP_BUS_NAME, DESKTOP_PATH, time::Duration::from_secs(5));
 
-	let app_id = portal_app_id();
+	let app_id = p.app_id;
 	let notification_id = format!("rustydialogs-{}", NEXT_NOTIFICATION_ID.fetch_add(1, Ordering::Relaxed));
 
 	let mut notification: PropMap = PropMap::new();
@@ -281,7 +279,7 @@ pub fn notify_popup(p: &NotifyPopup<'_>) {
 	let result: Result<(), _> = proxy.method_call(
 		NOTIFICATION_INTERFACE,
 		"AddNotification",
-		(app_id.as_ref(), notification_id.as_str(), notification),
+		(app_id, notification_id.as_str(), notification),
 	);
 	if result.is_err() {
 		return;
@@ -289,6 +287,7 @@ pub fn notify_popup(p: &NotifyPopup<'_>) {
 
 	if p.timeout > 0 {
 		let timeout = p.timeout as u64;
+		let app_id = app_id.to_string();
 		thread::spawn(move || {
 			thread::sleep(time::Duration::from_millis(timeout));
 			let conn = match Connection::new_session() {
@@ -299,16 +298,9 @@ pub fn notify_popup(p: &NotifyPopup<'_>) {
 			let _: Result<(), _> = proxy.method_call(
 				NOTIFICATION_INTERFACE,
 				"RemoveNotification",
-				(app_id.as_ref(), notification_id.as_str()),
+				(app_id.as_str(), notification_id.as_str()),
 			);
 		});
-	}
-}
-
-fn portal_app_id() -> Cow<'static, str> {
-	match std::env::var("RUSTY_DIALOGS_APP_ID") {
-		Ok(value) if !value.trim().is_empty() => Cow::Owned(value),
-		_ => Cow::Borrowed("rustydialogs"),
 	}
 }
 

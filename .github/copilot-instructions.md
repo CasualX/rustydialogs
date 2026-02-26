@@ -2,7 +2,7 @@
 
 ## Big Picture
 - `rustydialogs` is a small cross-platform dialog abstraction crate: public API in `src/lib.rs`, platform backends in `src/linux/`, `src/windows/`, and `src/macos/`.
-- `src/lib.rs` defines dialog data types (`MessageBox`, `FileDialog`, `FolderDialog`, `TextInput`, `ColorPicker`, `NotifyPopup`) and thin `show`/`pick_*` methods that delegate to platform functions.
+- `src/lib.rs` defines dialog data types (`MessageBox`, `FileDialog`, `FolderDialog`, `TextInput`, `ColorPicker`, `Notification`) and thin `show`/`pick_*` methods that delegate to platform functions.
 - Linux backend selection happens once in `src/linux/mod.rs`.
 - Windows uses native Win32 APIs through the `windows` crate; backend dispatch and concrete implementation lives in `src/windows/`.
 - macOS uses `osascript`-based implementations in `src/macos/mod.rs`.

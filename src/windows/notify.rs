@@ -3,7 +3,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::*;
 
-pub fn notify_popup(p: &NotifyPopup<'_>) {
+pub fn notify(p: &Notification<'_>) {
+	if p.app_id.is_empty() {
+		return;
+	}
+
 	let mut path = std::env::temp_dir();
 	path.push(format!(
 		"rustydialogs-notify-{}-{}.hta",
@@ -12,6 +16,7 @@ pub fn notify_popup(p: &NotifyPopup<'_>) {
 	));
 
 	let title = html_escape(p.title);
+	let app_name = html_escape(p.app_id);
 	let message = html_escape(p.message)
 		.replace('\n', "<br>")
 		.replace('\t', "&nbsp;&nbsp;&nbsp;&nbsp;");
@@ -35,7 +40,7 @@ pub fn notify_popup(p: &NotifyPopup<'_>) {
 <HTA:APPLICATION
 	SysMenu = "yes"
 	ID = "rustydialogsHTA"
-	APPLICATIONNAME = "rustydialogs_notifyPopup"
+	APPLICATIONNAME = "{app_name}"
 	MINIMIZEBUTTON = "no"
 	MAXIMIZEBUTTON = "no"
 	BORDER = "dialog"
@@ -91,20 +96,20 @@ End Sub
 </head>
 <body style="margin:0; padding:0; background:transparent; font-family:'Segoe UI',Tahoma,sans-serif; overflow:hidden;">
 <div id="notifyCard" style="background:#FFFFFF; border:1px solid #E5E7EB; border-left:6px solid {accent_color}; border-radius:12px; box-shadow:0 4px 16px #0002; padding:12px 14px 12px 14px;">
-  <!-- icon + text row -->
-  <table border="0" cellpadding="0" cellspacing="0" width="100%">
-    <tr>
-      <td valign="top" width="38">
-        <div id="notifyBadge" style="width:28px; height:28px; line-height:28px; text-align:center; border-radius:999px; font-size:16px; font-weight:700; color:{accent_color}; background:{accent_soft};">{icon_symbol}</div>
-      </td>
-      <td valign="top">
-        <p id="notifyTitle" style="margin:0 0 3px 0; font-size:14px; line-height:1.25; font-weight:600; color:#111827;">{title}</p>
-        <p id="notifyMsg" style="margin:0; font-size:12px; line-height:1.4; color:#374151; word-wrap:break-word;">{message}</p>
-      </td>
-    </tr>
-  </table>
-  <!-- bottom spacer -->
-  <div style="height:10px;"></div>
+	<!-- icon + text row -->
+	<table border="0" cellpadding="0" cellspacing="0" width="100%">
+		<tr>
+			<td valign="top" width="38">
+				<div id="notifyBadge" style="width:28px; height:28px; line-height:28px; text-align:center; border-radius:999px; font-size:16px; font-weight:700; color:{accent_color}; background:{accent_soft};">{icon_symbol}</div>
+			</td>
+			<td valign="top">
+				<p id="notifyTitle" style="margin:0 0 3px 0; font-size:14px; line-height:1.25; font-weight:600; color:#111827;">{title}</p>
+				<p id="notifyMsg" style="margin:0; font-size:12px; line-height:1.4; color:#374151; word-wrap:break-word;">{message}</p>
+			</td>
+		</tr>
+	</table>
+	<!-- bottom spacer -->
+	<div style="height:10px;"></div>
 </div>
 </body>
 </html>
