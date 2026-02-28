@@ -23,14 +23,15 @@ pub fn notify(p: &Notification<'_>) {
 	let (accent_color, accent_soft, icon_symbol) = match p.icon {
 		MessageIcon::Info => ("#2563EB", "#DBEAFE", "ℹ"),
 		MessageIcon::Warning => ("#D97706", "#FEF3C7", "⚠"),
-		MessageIcon::Error => ("#DC2626", "#FEE2E2", "✖"),
-		MessageIcon::Question => ("#7C3AED", "#EDE9FE", "?"),
+		MessageIcon::Error => ("#DC2626", "#FEE2E2", "❌"),
+		MessageIcon::Question => ("#7C3AED", "#EDE9FE", "❔"),
 	};
-	let close_script = if p.timeout > 0 {
-		format!("idTimer = window.setTimeout(\"window.Close\", {}, \"VBScript\")", p.timeout)
-	} else {
-		String::new()
-	};
+	let close_script = std::fmt::from_fn(|f| {
+		if p.timeout > 0 {
+			write!(f, "idTimer = window.setTimeout(\"window.Close\", {}, \"VBScript\")", p.timeout)?;
+		}
+		Ok(())
+	});
 
 	let hta = format!(
 		r##"<html>

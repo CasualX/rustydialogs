@@ -175,19 +175,18 @@ fn toast_xml(p: &Notification<'_>) -> String {
 	let duration = if p.timeout > 0 && p.timeout <= 7000 { "short" } else { "long" };
 	let title = xml_escape(p.title);
 	let message = xml_escape(p.message);
-	let icon_symbol = match p.icon {
+	let icon = match p.icon {
 		MessageIcon::Info => "ℹ",
 		MessageIcon::Warning => "⚠",
-		MessageIcon::Error => "✖",
-		MessageIcon::Question => "?",
+		MessageIcon::Error => "❌",
+		MessageIcon::Question => "❔",
 	};
-	let visual_title = xml_escape(&format!("{icon_symbol} {title}"));
 
 	format!(
 		r#"<toast duration="{duration}">
 	<visual>
 		<binding template="ToastGeneric">
-			<text>{visual_title}</text>
+			<text>{icon} {title}</text>
 			<text>{message}</text>
 		</binding>
 	</visual>
