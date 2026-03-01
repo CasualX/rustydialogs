@@ -26,7 +26,7 @@ pub fn notify(p: &Notification<'_>) {
 		MessageIcon::Error => ("#DC2626", "#FEE2E2", "❌"),
 		MessageIcon::Question => ("#7C3AED", "#EDE9FE", "❔"),
 	};
-	let close_script = std::fmt::from_fn(|f| {
+	let close_script = utils::FromFn(|f| {
 		if p.timeout > 0 {
 			write!(f, "idTimer = window.setTimeout(\"window.Close\", {}, \"VBScript\")", p.timeout)?;
 		}

@@ -3,6 +3,15 @@ use std::path::{Path, PathBuf};
 use std::borrow::Cow;
 
 #[allow(dead_code)]
+pub struct FromFn<F: Fn(&mut fmt::Formatter<'_>) -> fmt::Result>(pub F);
+
+impl<F: Fn(&mut fmt::Formatter<'_>) -> fmt::Result> fmt::Display for FromFn<F> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		(self.0)(f)
+	}
+}
+
+#[allow(dead_code)]
 pub struct PrintJoin<'a> {
 	pub parts: &'a [&'a str],
 	pub separator: &'a str,

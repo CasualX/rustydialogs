@@ -1,10 +1,9 @@
 const APP_ID: &str = "rustydialogs.example.notify";
 
 fn main() {
-	rustydialogs::Notification::setup(APP_ID);
-
 	// winrt-toast: Takes almost three seconds to show the first notification due to registration delays.
-	// All Notifications shown before the first one may be ignored...
+	// All Notifications shown before the registration is complete will be ignored.
+	rustydialogs::Notification::setup(APP_ID);
 
 	let i = std::process::id() / 4;
 
