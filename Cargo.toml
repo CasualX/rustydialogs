@@ -40,6 +40,12 @@ gtk4 = [
 	"dep:gtk4-gobject-sys",
 	"libnotify",
 ]
+appkit = [
+	"dep:objc2",
+	"dep:objc2-foundation",
+	"dep:objc2-app-kit",
+	"dep:dispatch2",
+]
 
 [dependencies]
 raw-window-handle = "0.6"
@@ -79,3 +85,9 @@ windows.features = [
 	"Win32_UI_Shell_Common",
 	"Win32_UI_WindowsAndMessaging",
 ]
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = { version = "0.6.4", optional = true }
+objc2-foundation = { version = "0.3.2", optional = true }
+objc2-app-kit = { version = "0.3.2", optional = true }
+dispatch2 = { version = "0.3.1", optional = true }

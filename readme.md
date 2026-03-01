@@ -18,9 +18,9 @@ Platform Support
 
 A reasonable effort is made to support the following platforms:
 
-- Windows 7 and later
-- Linux with Zenity or KDialog installed
-- macOS with `osascript` available
+- Windows 7 and later through Win32 API, with optional WinRT toast notifications (feature `winrt-toast`)
+- Linux with Zenity or KDialog installed, with GTK3 or GTK4 (feature `gtk3` / `gtk4`) or with XDG desktop portals (feature `xdg-portal`)
+- macOS with `osascript` available or natively with AppKit (feature `appkit`)
 
 ### Windows
 
@@ -52,11 +52,13 @@ The `xdg-portal` backend (feature `xdg-portal`) is currently partial:
 
 ### macOS
 
-On macOS, the dialogs are implemented using `osascript` (AppleScript).
-Some behaviors are best-effort due to native AppleScript limitations:
+Rusty Dialogs provides two (compile-time) macOS backends:
 
-- `TextInputMode::MultiLine` currently falls back to a single input dialog.
-- Notification timeout is controlled by the OS and may ignore `Notification::timeout`.
+- `osascript` (AppleScript) backend, enabled by default.
+
+  `TextInputMode::MultiLine` behaves like single-line input.
+
+- Native AppKit backend (on the main thread), opt-in with feature `appkit`.
 
 Development
 -----------
