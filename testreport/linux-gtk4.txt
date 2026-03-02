@@ -1,0 +1,419 @@
+Environment
+  OS: linux
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: gtk4
+  rustc: rustc 1.92.0 (ded5c06cf 2025-12-08)
+  cargo: cargo 1.92.0 (344c4567c 2025-10-21)
+
+Select tests
+  Enter = all tests
+  m = MessageBox
+  s = SaveFileDialog
+  o = OpenFileDialog
+  f = FolderDialog
+  t = TextInput
+  c = ColorPicker
+  n = Notification
+Choice: 
+
+==== Testing MessageBox ====
+
+Testing Icon: Info
+
+Step: Press OK.
+  Buttons: Ok
+  Icon: Info
+Gtk-Message: 22:04:44.858: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: Ok
+  Icon: Info
+Gtk-Message: 22:04:47.469: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press OK.
+  Buttons: OkCancel
+  Icon: Info
+Gtk-Message: 22:04:48.321: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: OkCancel
+  Icon: Info
+Gtk-Message: 22:04:49.283: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Info
+Gtk-Message: 22:04:49.835: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNo
+  Icon: Info
+Gtk-Message: 22:04:50.534: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNo
+  Icon: Info
+Gtk-Message: 22:04:51.114: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Info
+Gtk-Message: 22:04:51.560: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNoCancel
+  Icon: Info
+Gtk-Message: 22:04:52.078: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNoCancel
+  Icon: Info
+Gtk-Message: 22:04:52.783: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Info
+Gtk-Message: 22:04:53.208: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Info
+Gtk-Message: 22:04:53.585: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Testing Icon: Warning
+
+Step: Press OK.
+  Buttons: Ok
+  Icon: Warning
+Gtk-Message: 22:04:53.939: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: Ok
+  Icon: Warning
+Gtk-Message: 22:04:54.746: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press OK.
+  Buttons: OkCancel
+  Icon: Warning
+Gtk-Message: 22:04:55.280: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: OkCancel
+  Icon: Warning
+Gtk-Message: 22:04:55.887: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Warning
+Gtk-Message: 22:04:56.284: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNo
+  Icon: Warning
+Gtk-Message: 22:04:56.612: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNo
+  Icon: Warning
+Gtk-Message: 22:04:57.171: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Warning
+Gtk-Message: 22:04:57.599: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNoCancel
+  Icon: Warning
+Gtk-Message: 22:04:57.920: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNoCancel
+  Icon: Warning
+Gtk-Message: 22:04:58.484: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Warning
+Gtk-Message: 22:04:58.858: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Warning
+Gtk-Message: 22:04:59.185: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Testing Icon: Error
+
+Step: Press OK.
+  Buttons: Ok
+  Icon: Error
+Gtk-Message: 22:04:59.517: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: Ok
+  Icon: Error
+Gtk-Message: 22:05:00.138: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press OK.
+  Buttons: OkCancel
+  Icon: Error
+Gtk-Message: 22:05:00.484: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: OkCancel
+  Icon: Error
+Gtk-Message: 22:05:00.946: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Error
+Gtk-Message: 22:05:01.330: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNo
+  Icon: Error
+Gtk-Message: 22:05:01.785: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNo
+  Icon: Error
+Gtk-Message: 22:05:02.291: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Error
+Gtk-Message: 22:05:02.672: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNoCancel
+  Icon: Error
+Gtk-Message: 22:05:02.996: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNoCancel
+  Icon: Error
+Gtk-Message: 22:05:03.549: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Error
+Gtk-Message: 22:05:03.953: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Error
+Gtk-Message: 22:05:04.282: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Testing Icon: Question
+
+Step: Press OK.
+  Buttons: Ok
+  Icon: Question
+Gtk-Message: 22:05:04.612: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: Ok
+  Icon: Question
+Gtk-Message: 22:05:05.230: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press OK.
+  Buttons: OkCancel
+  Icon: Question
+Gtk-Message: 22:05:05.577: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: OkCancel
+  Icon: Question
+Gtk-Message: 22:05:06.070: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Question
+Gtk-Message: 22:05:06.451: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNo
+  Icon: Question
+Gtk-Message: 22:05:06.645: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNo
+  Icon: Question
+Gtk-Message: 22:05:07.214: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Question
+Gtk-Message: 22:05:07.558: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNoCancel
+  Icon: Question
+Gtk-Message: 22:05:07.777: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNoCancel
+  Icon: Question
+Gtk-Message: 22:05:08.431: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Question
+Gtk-Message: 22:05:08.801: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Question
+Gtk-Message: 22:05:09.095: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+==== Testing SaveFileDialog ====
+
+Step: Select `readme.md` and press Save.
+Gtk-Message: 22:05:09.405: GtkDialog mapped without a transient parent. This is discouraged.
+
+(process:1767756): Gtk-WARNING **: 22:05:13.633: Attempting to add 'file:///home/user/Projects/rustydialogs/readme.md' to the list of recently used resources, but no name of the application that is registering it was defined
+  Result: PASS
+
+Step: Dismiss the dialog.
+Gtk-Message: 22:05:13.909: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+==== Testing OpenFileDialog ====
+
+Step: Select `Cargo.toml` and press Open.
+Gtk-Message: 22:05:17.364: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Select multiple files (`Cargo.toml` and `readme.md`) and press Open.
+Gtk-Message: 22:05:19.502: GtkDialog mapped without a transient parent. This is discouraged.
+
+(process:1767756): Gtk-WARNING **: 22:05:19.509: Attempting to add 'file:///home/user/Projects/rustydialogs/Cargo.toml' to the list of recently used resources, but no name of the application that is registering it was defined
+  Result: FAIL - expected Some(["/home/user/Projects/rustydialogs/Cargo.toml", "/home/user/Projects/rustydialogs/readme.md"]), got Some(["/home/user/Projects/rustydialogs/readme.md", "/home/user/Projects/rustydialogs/Cargo.toml"])
+  Test failed, retry? [Y/n]: 
+  Retrying step...
+Gtk-Message: 22:05:31.318: GtkDialog mapped without a transient parent. This is discouraged.
+
+(process:1767756): Gtk-WARNING **: 22:05:31.325: Attempting to add 'file:///home/user/Projects/rustydialogs/readme.md' to the list of recently used resources, but no name of the application that is registering it was defined
+
+(process:1767756): Gtk-WARNING **: 22:05:31.325: Attempting to add 'file:///home/user/Projects/rustydialogs/Cargo.toml' to the list of recently used resources, but no name of the application that is registering it was defined
+  Result: FAIL - expected Some(["/home/user/Projects/rustydialogs/Cargo.toml", "/home/user/Projects/rustydialogs/readme.md"]), got Some(["/home/user/Projects/rustydialogs/readme.md", "/home/user/Projects/rustydialogs/Cargo.toml"])
+  Test failed, retry? [Y/n]: n
+  Marked as failed.
+
+Step: Dismiss the dialog.
+Gtk-Message: 22:05:44.835: GtkDialog mapped without a transient parent. This is discouraged.
+
+(process:1767756): Gtk-WARNING **: 22:05:44.843: Attempting to add 'file:///home/user/Projects/rustydialogs/readme.md' to the list of recently used resources, but no name of the application that is registering it was defined
+
+(process:1767756): Gtk-WARNING **: 22:05:44.843: Attempting to add 'file:///home/user/Projects/rustydialogs/Cargo.toml' to the list of recently used resources, but no name of the application that is registering it was defined
+  Result: PASS
+
+==== Testing FolderDialog ====
+
+Step: Select the `src` folder and press Open.
+Gtk-Message: 22:05:46.909: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+Gtk-Message: 22:06:00.585: GtkDialog mapped without a transient parent. This is discouraged.
+
+(process:1767756): Gtk-WARNING **: 22:06:00.593: Attempting to add 'file:///home/user/Projects/rustydialogs/src' to the list of recently used resources, but no name of the application that is registering it was defined
+  Result: PASS
+
+==== Testing ColorPicker ====
+
+Step: Select pure RED (#FF0000) and press OK.
+Gtk-Message: 22:06:02.300: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Select specific color (#4FB3A3) (79, 179, 163) and press OK.
+Gtk-Message: 22:06:08.480: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+Gtk-Message: 22:06:11.723: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+==== Testing TextInput ====
+
+Step: Enter `Hello, Rust!` and press OK.
+Gtk-Message: 22:06:12.883: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Enter `Password123` and press OK.
+Gtk-Message: 22:06:19.471: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Enter these three lines and press OK.
+Gtk-Message: 22:06:23.886: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+Step: Dismiss the dialog.
+Gtk-Message: 22:06:32.055: GtkDialog mapped without a transient parent. This is discouraged.
+  Result: PASS
+
+==== Testing Notification ====
+
+Step: Confirm Info appeared.
+Confirm notification? [Y/n]: 
+  Result: PASS
+
+Step: Confirm Warning appeared.
+Confirm notification? [Y/n]: 
+  Result: PASS
+
+Step: Confirm Error appeared.
+Confirm notification? [Y/n]: 
+  Result: PASS
+
+Step: Confirm Question appeared.
+Confirm notification? [Y/n]: 
+  Result: PASS

@@ -36,6 +36,7 @@ fn text_input_entry(p: &TextInput<'_>, password: bool) -> Option<String> {
 		gtk4_sys::gtk_window_set_default_size(dialog as *mut gtk4_sys::GtkWindow, 520, -1);
 		gtk4_sys::gtk_dialog_add_button(dialog as *mut gtk4_sys::GtkDialog, cancel.as_ptr(), gtk4_sys::GTK_RESPONSE_CANCEL);
 		gtk4_sys::gtk_dialog_add_button(dialog as *mut gtk4_sys::GtkDialog, ok.as_ptr(), gtk4_sys::GTK_RESPONSE_OK);
+		gtk4_sys::gtk_dialog_set_default_response(dialog as *mut gtk4_sys::GtkDialog, gtk4_sys::GTK_RESPONSE_OK);
 		style_response_button(dialog as *mut gtk4_sys::GtkDialog, gtk4_sys::GTK_RESPONSE_CANCEL);
 		style_response_button(dialog as *mut gtk4_sys::GtkDialog, gtk4_sys::GTK_RESPONSE_OK);
 
@@ -52,6 +53,7 @@ fn text_input_entry(p: &TextInput<'_>, password: bool) -> Option<String> {
 		gtk4_sys::gtk_label_set_xalign(label as *mut gtk4_sys::GtkLabel, 0.0);
 		let entry = gtk4_sys::gtk_entry_new();
 		gtk4_sys::gtk_editable_set_text(entry as *mut gtk4_sys::GtkEditable, value.as_ptr());
+		gtk4_sys::gtk_entry_set_activates_default(entry as *mut gtk4_sys::GtkEntry, 1);
 		if password {
 			gtk4_sys::gtk_entry_set_visibility(entry as *mut gtk4_sys::GtkEntry, 0);
 		}
@@ -59,20 +61,18 @@ fn text_input_entry(p: &TextInput<'_>, password: bool) -> Option<String> {
 		gtk4_sys::gtk_box_append(content as *mut gtk4_sys::GtkBox, label);
 		gtk4_sys::gtk_box_append(content as *mut gtk4_sys::GtkBox, entry);
 
-		let response = run_dialog(dialog as *mut gtk4_sys::GtkDialog);
-		let result = if response == gtk4_sys::GTK_RESPONSE_OK {
-			let text_ptr = gtk4_sys::gtk_editable_get_text(entry as *mut gtk4_sys::GtkEditable);
-			if text_ptr.is_null() {
-				None
+		run_dialog_f(dialog as *mut gtk4_sys::GtkDialog, |response| {
+			if response == gtk4_sys::GTK_RESPONSE_OK {
+				let text_ptr = gtk4_sys::gtk_editable_get_text(entry as *mut gtk4_sys::GtkEditable);
+				if text_ptr.is_null() {
+					None
+				} else {
+					Some(CStr::from_ptr(text_ptr).to_string_lossy().to_string())
+				}
 			} else {
-				Some(CStr::from_ptr(text_ptr).to_string_lossy().to_string())
+				None
 			}
-		} else {
-			None
-		};
-
-		gtk4_sys::gtk_window_destroy(dialog as *mut gtk4_sys::GtkWindow);
-		result
+		})
 	}
 }
 
@@ -118,24 +118,22 @@ fn text_input_multiline(p: &TextInput<'_>) -> Option<String> {
 		gtk4_sys::gtk_box_append(content as *mut gtk4_sys::GtkBox, label);
 		gtk4_sys::gtk_box_append(content as *mut gtk4_sys::GtkBox, scrolled);
 
-		let response = run_dialog(dialog as *mut gtk4_sys::GtkDialog);
-		let result = if response == gtk4_sys::GTK_RESPONSE_OK {
-			let mut start = std::mem::zeroed();
-			let mut end = std::mem::zeroed();
-			gtk4_sys::gtk_text_buffer_get_bounds(buffer, &mut start, &mut end);
-			let text_ptr = gtk4_sys::gtk_text_buffer_get_text(buffer, &mut start, &mut end, 0);
-			if text_ptr.is_null() {
-				None
+		run_dialog_f(dialog as *mut gtk4_sys::GtkDialog, |response| {
+			if response == gtk4_sys::GTK_RESPONSE_OK {
+				let mut start = std::mem::zeroed();
+				let mut end = std::mem::zeroed();
+				gtk4_sys::gtk_text_buffer_get_bounds(buffer, &mut start, &mut end);
+				let text_ptr = gtk4_sys::gtk_text_buffer_get_text(buffer, &mut start, &mut end, 0);
+				if text_ptr.is_null() {
+					None
+				} else {
+					let text = CStr::from_ptr(text_ptr).to_string_lossy().to_string();
+					gtk4_glib_sys::g_free(text_ptr as *mut _);
+					Some(text)
+				}
 			} else {
-				let text = CStr::from_ptr(text_ptr).to_string_lossy().to_string();
-				gtk4_glib_sys::g_free(text_ptr as *mut _);
-				Some(text)
+				None
 			}
-		} else {
-			None
-		};
-
-		gtk4_sys::gtk_window_destroy(dialog as *mut gtk4_sys::GtkWindow);
-		result
+		})
 	}
 }

@@ -26,11 +26,13 @@ const MARGIN: i32 = 12;
 const BUTTON_W: i32 = 88;
 const BUTTON_H: i32 = 26;
 const LABEL_H: i32 = 16;
+const LABEL_GAP: i32 = 6;
 const EDIT_H_SINGLE: i32 = 22;
 const BUTTON_GAP: i32 = 8;
 
 struct InputDialogState {
 	message: Vec<u16>,
+	message_height: i32,
 	initial: Vec<u16>,
 	multiline: bool,
 	// For single-line mode: the locked window height (full window, pixels) captured after initial layout.
@@ -42,9 +44,11 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 	let title = utf16cs(p.title);
 	let multiline = matches!(p.mode, TextInputMode::MultiLine);
 	let password = matches!(p.mode, TextInputMode::Password);
-	let mut template = build_input_dialog_template(&title, multiline, password);
+	let message_height = message_label_height(p.message);
+	let mut template = build_input_dialog_template(&title, multiline, password, message_height);
 	let mut state = InputDialogState {
 		message: utf16cs(p.message),
+		message_height,
 		initial: utf16cs(p.value),
 		multiline,
 		fixed_height: 0,
@@ -75,7 +79,7 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 
 /// Re-layout all controls to fill the client area, anchoring the edit box to
 /// all four sides and the buttons to the bottom-right corner.
-unsafe fn layout_controls(hwnd: HWND, multiline: bool) {
+unsafe fn layout_controls(hwnd: HWND, multiline: bool, message_height: i32) {
 	let mut rc = RECT::default();
 	let _ = GetClientRect(hwnd, &mut rc);
 	let w = rc.right - rc.left;
@@ -89,7 +93,7 @@ unsafe fn layout_controls(hwnd: HWND, multiline: bool) {
 			MARGIN,
 			MARGIN,
 			w - 2 * MARGIN,
-			LABEL_H,
+			message_height,
 			true,
 		);
 	}
@@ -110,7 +114,7 @@ unsafe fn layout_controls(hwnd: HWND, multiline: bool) {
 	}
 
 	// Edit box — anchored to all four sides
-	let edit_top = MARGIN + LABEL_H + 6;
+	let edit_top = MARGIN + message_height + LABEL_GAP;
 	let edit_hwnd = GetDlgItem(Some(hwnd), EDIT_ID);
 	if let Ok(ew) = edit_hwnd {
 		let edit_h = if multiline {
@@ -147,7 +151,7 @@ unsafe extern "system" fn input_dialog_proc(
 				if let Ok(ew) = edit_hwnd {
 					SendMessageW(ew, 0x00B1 /*EM_SETSEL*/, Some(WPARAM(usize::MAX)), Some(LPARAM(-1)));
 				}
-				layout_controls(hwnd, (*state_ptr).multiline);
+				layout_controls(hwnd, (*state_ptr).multiline, (*state_ptr).message_height);
 				// For single-line mode, snapshot the window height so we can lock it.
 				if !(*state_ptr).multiline {
 					let mut wr = RECT::default();
@@ -160,7 +164,7 @@ unsafe extern "system" fn input_dialog_proc(
 		WM_SIZE => {
 			let state_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut InputDialogState;
 			if !state_ptr.is_null() {
-				layout_controls(hwnd, (*state_ptr).multiline);
+				layout_controls(hwnd, (*state_ptr).multiline, (*state_ptr).message_height);
 			}
 			0
 		}
@@ -168,8 +172,18 @@ unsafe extern "system" fn input_dialog_proc(
 			let state_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut InputDialogState;
 			let mmi = lparam.0 as *mut MINMAXINFO;
 			if !mmi.is_null() {
+				let message_height = if !state_ptr.is_null() {
+					(*state_ptr).message_height
+				} else {
+					LABEL_H
+				};
+				let extra_height = (message_height - LABEL_H).max(0);
 				let multiline = !state_ptr.is_null() && (*state_ptr).multiline;
-				let min_h = if multiline { MIN_HEIGHT_MULTI } else { MIN_HEIGHT_SINGLE };
+				let min_h = if multiline {
+					MIN_HEIGHT_MULTI + extra_height
+				} else {
+					MIN_HEIGHT_SINGLE + extra_height
+				};
 				(*mmi).ptMinTrackSize.x = MIN_WIDTH;
 				(*mmi).ptMinTrackSize.y = min_h;
 				// Single-line: lock height to exactly the initial window height
@@ -192,7 +206,13 @@ unsafe extern "system" fn input_dialog_proc(
 				if !state_ptr.is_null() {
 					let mut buffer = [0u16; 32768];
 					let length = GetDlgItemTextW(hwnd, EDIT_ID, &mut buffer) as usize;
-					(*state_ptr).result = Some(String::from_utf16_lossy(&buffer[..length]));
+					let text = String::from_utf16_lossy(&buffer[..length]);
+					let text = if (*state_ptr).multiline {
+						text.replace("\r\n", "\n")
+					} else {
+						text
+					};
+					(*state_ptr).result = Some(text);
 				}
 				let _ = EndDialog(hwnd, IDOK.0 as isize);
 				return 1;
@@ -209,7 +229,7 @@ unsafe extern "system" fn input_dialog_proc(
 	}
 }
 
-fn build_input_dialog_template(title: &[u16], multiline: bool, password: bool) -> Vec<u8> {
+fn build_input_dialog_template(title: &[u16], multiline: bool, password: bool, message_height: i32) -> Vec<u8> {
 	// Resizable window: WS_THICKFRAME replaces DS_MODALFRAME; DS_CENTER centres on screen.
 	// DS_SETFONT lets us specify a font (we use the system default 9pt "MS Shell Dlg 2").
 	let dialog_style = (WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_VISIBLE).0 as u32
@@ -232,7 +252,9 @@ fn build_input_dialog_template(title: &[u16], multiline: bool, password: bool) -
 	// We pick a comfortable default; the user can resize freely.
 	// Single-line height is tightly fitted: label + edit + buttons + margins.
 	let dlg_w: i16 = 240;
-	let dlg_h: i16 = if multiline { 140 } else { 60 };
+	let extra_height = (message_height - LABEL_H).max(0);
+	let extra_height_du = ((extra_height + 1) / 2) as i16;
+	let dlg_h: i16 = if multiline { 140 } else { 60 } + extra_height_du;
 
 	let mut data = Vec::with_capacity(512);
 	push_u32(&mut data, dialog_style);
@@ -292,6 +314,11 @@ fn build_input_dialog_template(title: &[u16], multiline: bool, password: bool) -
 	);
 
 	data
+}
+
+fn message_label_height(message: &str) -> i32 {
+	let line_count = message.lines().count().max(1) as i32;
+	LABEL_H * line_count
 }
 
 #[allow(clippy::too_many_arguments)]

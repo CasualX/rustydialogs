@@ -1,3 +1,29 @@
+/*!
+Rusty Dialogs is a cross-platform library for showing native dialog boxes and notifications.
+
+Supported platforms and backends:
+
+### Windows
+
+Win32-based legacy dialogs compatible with any COM apartment model.
+
+Optional WinRT-Toast notifications are available on Windows 10 and later. (feature: `winrt-toast`)
+
+### Linux & BSDs
+
+By default, executable-based backends (`kdialog` and `zenity`) are used.
+
+Optional GTK3 and GTK4 backends are available with libnotify-based notifications. (feature: `gtk3`, `gtk4`)
+
+XDG desktop portal support is also available, but limited to file and folder dialogs. (feature: `xdg-portal`)
+
+### macOS
+
+By default, AppleScript-based dialogs are used.
+
+Optional AppKit-based dialogs and notifications are also available. (feature: `appkit`)
+*/
+
 use std::path::{Path, PathBuf};
 use raw_window_handle::HasWindowHandle;
 
@@ -43,6 +69,19 @@ pub enum MessageResult {
 }
 
 /// Message box dialog.
+///
+/// ```no_run
+/// let result = rustydialogs::MessageBox {
+/// 	title: "Confirm Action",
+/// 	message: "Are you sure you want to proceed?",
+/// 	icon: rustydialogs::MessageIcon::Question,
+/// 	buttons: rustydialogs::MessageButtons::YesNo,
+/// 	owner: None,
+/// }.show();
+/// if result == Some(rustydialogs::MessageResult::Yes) {
+/// 	println!("User chose Yes");
+/// }
+/// ```
 #[derive(Copy, Clone)]
 pub struct MessageBox<'a> {
 	/// The title of the dialog.
@@ -60,14 +99,9 @@ pub struct MessageBox<'a> {
 impl<'a> MessageBox<'a> {
 	/// Show the dialog.
 	///
-	/// ### Linux
+	/// Prefer to check if the dialog result matches `Some(Ok)` or `Some(Yes)` rather than checking for `Some(No)` or `Some(Cancel)`.
 	///
-	/// When the window is dismissed by clicking the close button, the result is `None`.
-	///
-	/// ### Windows
-	///
-	/// When the window is dismissed by clicking the close button, the result is Some with the rejective button,
-	/// e.g. `Some(MessageResult::Cancel)` for [`MessageButtons::OkCancel`] or `Some(MessageResult::No)` for [`MessageButtons::YesNo`].
+	/// When the dialog is dismissed (closing the dialog or pressing ESC), the result maybe `None` or may be any of the message results even if that button is not present (e.g. `Some(Cancel)`).
 	#[inline]
 	pub fn show(&self) -> Option<MessageResult> {
 		message_box(self)
@@ -87,6 +121,26 @@ pub struct FileFilter<'a> {
 /// File dialog.
 ///
 /// The file dialog allows the user to select a file or multiple files, or to specify a file name for saving.
+///
+/// ```no_run
+/// use std::env;
+///
+/// let file = rustydialogs::FileDialog {
+/// 	title: "Open File",
+/// 	path: env::current_dir().ok().as_deref(),
+/// 	filter: Some(&[
+/// 		rustydialogs::FileFilter {
+/// 			desc: "Text Files",
+/// 			patterns: &["*.txt", "*.md"],
+/// 		},
+/// 	]),
+/// 	owner: None,
+/// }.pick_file();
+///
+/// if let Some(path) = file {
+/// 	println!("Picked file: {}", path.display());
+/// }
+/// ```
 #[derive(Copy, Clone)]
 pub struct FileDialog<'a> {
 	/// The title of the dialog.
@@ -128,6 +182,20 @@ impl<'a> FileDialog<'a> {
 /// Folder dialog.
 ///
 /// The folder dialog allows the user to select a folder or directory.
+///
+/// ```no_run
+/// use std::env;
+///
+/// let folder = rustydialogs::FolderDialog {
+/// 	title: "Select Folder",
+/// 	directory: env::current_dir().ok().as_deref(),
+/// 	owner: None,
+/// }.show();
+///
+/// if let Some(path) = folder {
+/// 	println!("Picked folder: {}", path.display());
+/// }
+/// ```
 #[derive(Copy, Clone)]
 pub struct FolderDialog<'a> {
 	/// The title of the dialog.
@@ -160,6 +228,20 @@ pub enum TextInputMode {
 /// Text input dialog.
 ///
 /// The text input dialog allows the user to enter text, which is returned as a string.
+///
+/// ```no_run
+/// let name = rustydialogs::TextInput {
+/// 	title: "User Name",
+/// 	message: "Enter your name:",
+/// 	value: "",
+/// 	mode: rustydialogs::TextInputMode::SingleLine,
+/// 	owner: None,
+/// }.show();
+///
+/// if let Some(name) = name {
+/// 	println!("Hello, {name}!");
+/// }
+/// ```
 #[derive(Copy, Clone)]
 pub struct TextInput<'a> {
 	/// The title of the dialog.
@@ -199,6 +281,22 @@ pub struct ColorValue {
 ///
 /// The color picker dialog allows the user to select a color, which is returned as an RGB value.
 /// The dialog may also show a palette of predefined colors for the user to choose from.
+///
+/// ```no_run
+/// let color = rustydialogs::ColorPicker {
+/// 	title: "Pick a Color",
+/// 	value: rustydialogs::ColorValue {
+/// 		red: 64,
+/// 		green: 128,
+/// 		blue: 255,
+/// 	},
+/// 	owner: None,
+/// }.show();
+///
+/// if let Some(color) = color {
+/// 	println!("RGB({}, {}, {})", color.red, color.green, color.blue);
+/// }
+/// ```
 #[derive(Copy, Clone)]
 pub struct ColorPicker<'a> {
 	/// The title of the dialog.
@@ -222,6 +320,23 @@ impl<'a> ColorPicker<'a> {
 /// Notification.
 ///
 /// Shows a brief message to the user without blocking their interaction with the application.
+///
+/// ```no_run
+/// // Define a unique application identifier for the notification system.
+/// const APP_ID: &str = "com.example.myapp";
+///
+/// // Invoke setup at application initialization to ensure the application
+/// // is registered and ready to show notifications later.
+/// rustydialogs::Notification::setup(APP_ID);
+///
+/// rustydialogs::Notification {
+/// 	app_id: APP_ID,
+/// 	title: "Task Complete",
+/// 	message: "All files were processed successfully.",
+/// 	icon: rustydialogs::MessageIcon::Info,
+/// 	timeout: rustydialogs::Notification::SHORT_TIMEOUT,
+/// }.show();
+/// ```
 #[derive(Copy, Clone, Debug)]
 pub struct Notification<'a> {
 	/// Application identifier used by notification backends.

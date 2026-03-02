@@ -254,8 +254,10 @@ fn invoke_async(program: &str, args: &[&OsStr]) {
 #[track_caller]
 fn invoke_output(program: &str, args: &[&OsStr]) -> (Option<i32>, String) {
 	let output = process::Command::new(program).args(args).output().unwrap();
-	let stdout = String::from_utf8(output.stdout)
-		.unwrap_or_else(|err| String::from_utf8_lossy(err.as_bytes()).to_string());
+	let mut stdout = String::from_utf8(output.stdout).unwrap();
+	if stdout.ends_with('\n') {
+		stdout.pop();
+	}
 	let code = output.status.code();
 	(code, stdout)
 }

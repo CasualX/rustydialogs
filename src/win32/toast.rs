@@ -1,3 +1,5 @@
+use std::{env, mem, ptr};
+use std::sync::OnceLock;
 use windows::core::{w, Error, GUID, HSTRING, Interface, PCWSTR, PWSTR};
 use windows::Data::Xml::Dom::XmlDocument;
 use windows::Win32::Foundation::{PROPERTYKEY, RPC_E_CHANGED_MODE};
@@ -14,9 +16,16 @@ use windows::UI::Notifications::{ToastNotification, ToastNotificationManager};
 use super::*;
 
 pub fn setup(app_id: &str) {
-	if let Err(error) = ensure_start_menu_shortcut(app_id) {
-		eprintln!("rustydialogs: failed to register toast shortcut during setup: {error}");
-	}
+	static SETUP_ONCE: OnceLock<bool> = OnceLock::new();
+
+	let _ = SETUP_ONCE.get_or_init(|| {
+		if let Err(error) = ensure_start_menu_shortcut(app_id) {
+			eprintln!("rustydialogs: failed to register toast shortcut during setup: {error}");
+			return false;
+		}
+
+		return true;
+	});
 }
 
 pub fn notify(p: &Notification<'_>) {
@@ -45,57 +54,57 @@ fn ensure_start_menu_shortcut(app_id: &str) -> windows::core::Result<()> {
 		return Err(Error::new(windows::core::HRESULT(0x80070057u32 as i32), "Application identifier cannot be empty"));
 	}
 
-	let Ok(exe_path) = std::env::current_exe() else {
+	let Ok(exe_path) = env::current_exe() else {
 		return Err(Error::new(windows::core::HRESULT(0x80070002u32 as i32), "Failed to get current executable path"));
 	};
 	let Some(programs_dir) = start_menu_programs_dir() else {
 		return Err(Error::new(windows::core::HRESULT(0x80070002u32 as i32), "Failed to get Start Menu Programs directory"));
 	};
-	let _ = std::fs::create_dir_all(&programs_dir);
+	// let _ = fs::create_dir_all(&programs_dir);
 
 	let shortcut_name = sanitize_shortcut_name(app_id);
 	let shortcut_path = programs_dir.join(format!("{shortcut_name}.lnk"));
 
-	if !shortcut_path.exists() {
-		let _com = ComApartment::init()?;
+	// If the shortcut already exists, recreate it to ensure the AppUserModelID is up to date (required for toasts to work).
 
-		let shell_link: IShellLinkW = unsafe {
-			CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER)?
-		};
+	let _com = ComApartment::init()?;
 
-		let exe_utf16 = utf16cs(&exe_path.to_string_lossy());
-		unsafe { shell_link.SetPath(PCWSTR(exe_utf16.as_ptr()))?; }
-		unsafe { shell_link.SetArguments(w!(""))?; }
+	let shell_link: IShellLinkW = unsafe {
+		CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER)?
+	};
 
-		if let Some(workdir) = exe_path.parent() {
-			let workdir_utf16 = utf16cs(&workdir.to_string_lossy());
-			unsafe { shell_link.SetWorkingDirectory(PCWSTR(workdir_utf16.as_ptr()))?; }
-		}
+	let exe_utf16 = utf16cs(&exe_path.to_string_lossy());
+	unsafe { shell_link.SetPath(PCWSTR(exe_utf16.as_ptr()))?; }
+	unsafe { shell_link.SetArguments(w!(""))?; }
 
-		let desc_utf16 = utf16cs(app_id);
-		unsafe { shell_link.SetDescription(PCWSTR(desc_utf16.as_ptr()))?; }
-
-		let property_store: IPropertyStore = shell_link.cast()?;
-		set_app_user_model_id(&property_store, app_id)?;
-
-		let persist: IPersistFile = shell_link.cast()?;
-		let shortcut_utf16 = utf16cs(&shortcut_path.to_string_lossy());
-		unsafe { persist.Save(PCWSTR(shortcut_utf16.as_ptr()), true)?; }
+	if let Some(workdir) = exe_path.parent() {
+		let workdir_utf16 = utf16cs(&workdir.to_string_lossy());
+		unsafe { shell_link.SetWorkingDirectory(PCWSTR(workdir_utf16.as_ptr()))?; }
 	}
+
+	let desc_utf16 = utf16cs(app_id);
+	unsafe { shell_link.SetDescription(PCWSTR(desc_utf16.as_ptr()))?; }
+
+	let property_store: IPropertyStore = shell_link.cast()?;
+	set_app_user_model_id(&property_store, app_id)?;
+
+	let persist: IPersistFile = shell_link.cast()?;
+	let shortcut_utf16 = utf16cs(&shortcut_path.to_string_lossy());
+	unsafe { persist.Save(PCWSTR(shortcut_utf16.as_ptr()), true)?; }
 
 	Ok(())
 }
 
 fn set_app_user_model_id(property_store: &IPropertyStore, app_id: &str) -> windows::core::Result<()> {
 	let app_id_wide = utf16cs(app_id);
-	let byte_len = app_id_wide.len() * std::mem::size_of::<u16>();
+	let byte_len = app_id_wide.len() * mem::size_of::<u16>();
 	let memory = unsafe { CoTaskMemAlloc(byte_len) } as *mut u16;
 	if memory.is_null() {
 		return Err(Error::new(windows::core::HRESULT(0x8007000Eu32 as i32), "CoTaskMemAlloc failed"));
 	}
 
 	unsafe {
-		std::ptr::copy_nonoverlapping(app_id_wide.as_ptr(), memory, app_id_wide.len());
+		ptr::copy_nonoverlapping(app_id_wide.as_ptr(), memory, app_id_wide.len());
 	}
 
 	let mut value = PROPVARIANT::default();
@@ -118,7 +127,7 @@ fn set_app_user_model_id(property_store: &IPropertyStore, app_id: &str) -> windo
 }
 
 fn start_menu_programs_dir() -> Option<PathBuf> {
-	let mut appdata = PathBuf::from(std::env::var_os("APPDATA")?);
+	let mut appdata = PathBuf::from(env::var_os("APPDATA")?);
 	appdata.push("Microsoft");
 	appdata.push("Windows");
 	appdata.push("Start Menu");

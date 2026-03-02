@@ -62,22 +62,21 @@ fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 
 	apply_file_chooser_defaults(chooser, p, false, multiple);
 
-	let response = run_native_dialog(native as *mut gtk4_sys::GtkNativeDialog);
-	if response != gtk4_sys::GTK_RESPONSE_ACCEPT {
-		unsafe { g_object_unref(native as *mut _) };
-		return None;
-	}
+	run_native_dialog_f(native as *mut gtk4_sys::GtkNativeDialog, |response| {
+		if response != gtk4_sys::GTK_RESPONSE_ACCEPT {
+			return None;
+		}
 
-	let result = if multiple {
-		let model = unsafe { gtk4_sys::gtk_file_chooser_get_files(chooser) };
-		collect_file_model(model as *mut GListModel)
-	} else {
-		let file = unsafe { gtk4_sys::gtk_file_chooser_get_file(chooser) };
-		gfile_to_path_buf(file as *mut GFile).into_iter().collect()
-	};
+		let result = if multiple {
+			let model = unsafe { gtk4_sys::gtk_file_chooser_get_files(chooser) };
+			collect_file_model(model as *mut GListModel)
+		} else {
+			let file = unsafe { gtk4_sys::gtk_file_chooser_get_file(chooser) };
+			gfile_to_path_buf(file as *mut GFile).into_iter().collect()
+		};
 
-	unsafe { g_object_unref(native as *mut _) };
-	Some(result)
+		Some(result)
+	})
 }
 
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
@@ -100,15 +99,12 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 
 	apply_file_chooser_defaults(chooser, p, true, false);
 
-	let response = run_native_dialog(native as *mut gtk4_sys::GtkNativeDialog);
-	if response != gtk4_sys::GTK_RESPONSE_ACCEPT {
-		unsafe { g_object_unref(native as *mut _) };
-		return None;
-	}
+	run_native_dialog_f(native as *mut gtk4_sys::GtkNativeDialog, |response| {
+		if response != gtk4_sys::GTK_RESPONSE_ACCEPT {
+			return None;
+		}
 
-	let file = unsafe { gtk4_sys::gtk_file_chooser_get_file(chooser) };
-	let result = gfile_to_path_buf(file as *mut GFile);
-
-	unsafe { g_object_unref(native as *mut _) };
-	result
+		let file = unsafe { gtk4_sys::gtk_file_chooser_get_file(chooser) };
+		gfile_to_path_buf(file as *mut GFile)
+	})
 }

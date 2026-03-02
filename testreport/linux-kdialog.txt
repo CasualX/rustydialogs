@@ -1,0 +1,345 @@
+Environment
+  OS: linux
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: kdialog
+  rustc: rustc 1.92.0 (ded5c06cf 2025-12-08)
+  cargo: cargo 1.92.0 (344c4567c 2025-10-21)
+
+Select tests
+  Enter = all tests
+  m = MessageBox
+  s = SaveFileDialog
+  o = OpenFileDialog
+  f = FolderDialog
+  t = TextInput
+  c = ColorPicker
+  n = Notification
+Choice: 
+
+==== Testing MessageBox ====
+
+Testing Icon: Info
+
+Step: Press OK.
+  Buttons: Ok
+  Icon: Info
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: Ok
+  Icon: Info
+  Result: PASS
+
+Step: Press OK.
+  Buttons: OkCancel
+  Icon: Info
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: OkCancel
+  Icon: Info
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Info
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNo
+  Icon: Info
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNo
+  Icon: Info
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Info
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: FAIL - expected None, got Some(Cancel)
+  Test failed, retry? [Y/n]: n
+  Marked as failed.
+
+Testing Icon: Warning
+
+Step: Press OK.
+  Buttons: Ok
+  Icon: Warning
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: Ok
+  Icon: Warning
+  Result: PASS
+
+Step: Press OK.
+  Buttons: OkCancel
+  Icon: Warning
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: OkCancel
+  Icon: Warning
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Warning
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNo
+  Icon: Warning
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNo
+  Icon: Warning
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Warning
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: FAIL - expected None, got Some(Cancel)
+  Test failed, retry? [Y/n]: n
+  Marked as failed.
+
+Testing Icon: Error
+
+Step: Press OK.
+  Buttons: Ok
+  Icon: Error
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: Ok
+  Icon: Error
+  Result: PASS
+
+Step: Press OK.
+  Buttons: OkCancel
+  Icon: Error
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: OkCancel
+  Icon: Error
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Error
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNo
+  Icon: Error
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNo
+  Icon: Error
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Error
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: FAIL - expected None, got Some(Cancel)
+  Test failed, retry? [Y/n]: n
+  Marked as failed.
+
+Testing Icon: Question
+
+Step: Press OK.
+  Buttons: Ok
+  Icon: Question
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: Ok
+  Icon: Question
+  Result: PASS
+
+Step: Press OK.
+  Buttons: OkCancel
+  Icon: Question
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: OkCancel
+  Icon: Question
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Question
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNo
+  Icon: Question
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNo
+  Icon: Question
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Question
+  Result: PASS
+
+Step: Press Yes.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: PASS
+
+Step: Press No.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: PASS
+
+Step: Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: FAIL - expected None, got Some(Cancel)
+  Test failed, retry? [Y/n]: n
+  Marked as failed.
+
+==== Testing SaveFileDialog ====
+
+Step: Select `readme.md` and press Save.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+==== Testing OpenFileDialog ====
+
+Step: Select `Cargo.toml` and press Open.
+  Result: PASS
+
+Step: Select multiple files (`Cargo.toml` and `readme.md`) and press Open.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+==== Testing FolderDialog ====
+
+Step: Select the `src` folder and press Open.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+==== Testing ColorPicker ====
+
+Step: Select pure RED (#FF0000) and press OK.
+  Result: PASS
+
+Step: Select specific color (#4FB3A3) (79, 179, 163) and press OK.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+==== Testing TextInput ====
+
+Step: Enter `Hello, Rust!` and press OK.
+  Result: PASS
+
+Step: Enter `Password123` and press OK.
+  Result: PASS
+
+Step: Enter these three lines and press OK.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+==== Testing Notification ====
+
+Step: Confirm Info appeared.
+Confirm notification? [Y/n]: 
+  Result: PASS
+
+Step: Confirm Warning appeared.
+Confirm notification? [Y/n]: 
+  Result: PASS
+
+Step: Confirm Error appeared.
+Confirm notification? [Y/n]: 
+  Result: PASS
+
+Step: Confirm Question appeared.
+Confirm notification? [Y/n]: 
+  Result: PASS

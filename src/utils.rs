@@ -1,5 +1,5 @@
 use std::{env, fmt};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::borrow::Cow;
 
 #[allow(dead_code)]
@@ -30,16 +30,14 @@ impl<'a> fmt::Display for PrintJoin<'a> {
 	}
 }
 
-pub fn abspath(path: Option<&Path>) -> Cow<'_, Path> {
-	match path {
-		Some(path) if path.is_absolute() => Cow::Borrowed(path),
-		Some(path) => {
-			let directory = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-			Cow::Owned(directory.join(path))
+pub fn abspath(path: Option<&Path>) -> Option<Cow<'_, Path>> {
+	path.and_then(|p| {
+		if p.is_absolute() {
+			Some(Cow::Borrowed(p))
 		}
-		None => {
-			let directory = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-			Cow::Owned(directory)
+		else {
+			let directory = env::current_dir().ok()?;
+			Some(Cow::Owned(directory.join(p)))
 		}
-	}
+	})
 }

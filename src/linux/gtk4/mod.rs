@@ -5,7 +5,9 @@ use std::{ptr, sync};
 
 use gtk4_gio_sys::{g_file_get_path, g_list_model_get_item, g_list_model_get_n_items, GFile, GListModel};
 use gtk4_glib_sys::{g_free, g_main_loop_new, g_main_loop_quit, g_main_loop_run, g_main_loop_unref, GMainLoop};
-use gtk4_gobject_sys::{g_object_unref, g_signal_connect_data};
+use gtk4_gobject_sys::{
+	g_object_ref_sink, g_object_unref, g_signal_connect_data, g_signal_handler_disconnect,
+};
 
 use super::*;
 
@@ -131,7 +133,7 @@ fn run_dialog(dialog: *mut gtk4_sys::GtkDialog) -> i32 {
 			on_dialog_response
 				as unsafe extern "C" fn(*mut gtk4_sys::GtkDialog, i32, *mut c_void),
 		));
-		g_signal_connect_data(
+		let handler_id = g_signal_connect_data(
 			dialog as *mut _,
 			c"response".as_ptr(),
 			callback,
@@ -142,10 +144,25 @@ fn run_dialog(dialog: *mut gtk4_sys::GtkDialog) -> i32 {
 
 		gtk4_sys::gtk_window_present(dialog as *mut gtk4_sys::GtkWindow);
 		g_main_loop_run(loop_);
+		g_signal_handler_disconnect(dialog as *mut _, handler_id);
 		g_main_loop_unref(loop_);
 	}
 
 	state.response
+}
+
+#[inline]
+fn run_dialog_f<T, F: FnOnce(i32) -> T>(dialog: *mut gtk4_sys::GtkDialog, f: F) -> T {
+	unsafe {
+		g_object_ref_sink(dialog as *mut _);
+	}
+	let response = run_dialog(dialog);
+	let result = f(response);
+	unsafe {
+		gtk4_sys::gtk_window_close(dialog as *mut gtk4_sys::GtkWindow);
+		g_object_unref(dialog as *mut _);
+	}
+	result
 }
 
 fn run_native_dialog(dialog: *mut gtk4_sys::GtkNativeDialog) -> i32 {
@@ -160,7 +177,7 @@ fn run_native_dialog(dialog: *mut gtk4_sys::GtkNativeDialog) -> i32 {
 			on_native_dialog_response
 				as unsafe extern "C" fn(*mut gtk4_sys::GtkNativeDialog, i32, *mut c_void),
 		));
-		g_signal_connect_data(
+		let handler_id = g_signal_connect_data(
 			dialog as *mut _,
 			c"response".as_ptr(),
 			callback,
@@ -171,9 +188,20 @@ fn run_native_dialog(dialog: *mut gtk4_sys::GtkNativeDialog) -> i32 {
 
 		gtk4_sys::gtk_native_dialog_show(dialog);
 		g_main_loop_run(loop_);
+		g_signal_handler_disconnect(dialog as *mut _, handler_id);
 		gtk4_sys::gtk_native_dialog_hide(dialog);
 		g_main_loop_unref(loop_);
 	}
 
 	state.response
+}
+
+#[inline]
+fn run_native_dialog_f<T, F: FnOnce(i32) -> T>(dialog: *mut gtk4_sys::GtkNativeDialog, f: F) -> T {
+	let response = run_native_dialog(dialog);
+	let result = f(response);
+	unsafe {
+		g_object_unref(dialog as *mut _);
+	}
+	result
 }

@@ -3,13 +3,14 @@ use std::{ptr, sync};
 
 use super::*;
 
-static LIBNOTIFY_INITIALIZED: sync::OnceLock<bool> = sync::OnceLock::new();
 
 fn cstring(value: &str) -> CString {
 	CString::new(value).unwrap_or_else(|_| CString::new(value.replace('\0', " ")).unwrap())
 }
 
 pub fn init(app_id: &str) -> bool {
+	static LIBNOTIFY_INITIALIZED: sync::OnceLock<bool> = sync::OnceLock::new();
+
 	// Best effort: libnotify initialization is process-global.
 	// Changing app_id after the first initialization may not have any effect.
 	let ok = *LIBNOTIFY_INITIALIZED.get_or_init(move || {

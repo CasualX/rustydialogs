@@ -293,7 +293,9 @@ fn initial_directory(initial_path: Option<&Path>) -> Option<PathBuf> {
 }
 
 fn initial_directory_and_name(initial_path: Option<&Path>) -> (Option<PathBuf>, Option<String>) {
-	let path = utils::abspath(initial_path);
+	let Some(path) = utils::abspath(initial_path) else {
+		return (None, None);
+	};
 
 	if path.is_dir() {
 		return (Some(path.into_owned()), None);

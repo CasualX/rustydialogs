@@ -1,5 +1,11 @@
 use super::*;
 
+unsafe fn style_dialog_layout(dialog: *mut gtk_sys::GtkWidget) {
+	let content = gtk_sys::gtk_dialog_get_content_area(dialog as *mut gtk_sys::GtkDialog);
+	gtk_sys::gtk_box_set_spacing(content as *mut gtk_sys::GtkBox, 10);
+	gtk_sys::gtk_container_set_border_width(content as *mut gtk_sys::GtkContainer, 14);
+}
+
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 	match p.mode {
 		TextInputMode::SingleLine => text_input_entry(p, false),
@@ -20,19 +26,24 @@ fn text_input_entry(p: &TextInput<'_>, password: bool) -> Option<String> {
 
 	unsafe {
 		gtk_sys::gtk_window_set_title(dialog as *mut gtk_sys::GtkWindow, title.as_ptr());
+		gtk_sys::gtk_window_set_default_size(dialog as *mut gtk_sys::GtkWindow, 520, -1);
 		gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, cancel.as_ptr(), gtk_sys::GTK_RESPONSE_CANCEL);
 		gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, ok.as_ptr(), gtk_sys::GTK_RESPONSE_OK);
+		gtk_sys::gtk_dialog_set_default_response(dialog as *mut gtk_sys::GtkDialog, gtk_sys::GTK_RESPONSE_OK);
 
 		let content = gtk_sys::gtk_dialog_get_content_area(dialog as *mut gtk_sys::GtkDialog);
+		style_dialog_layout(dialog);
 		let label = gtk_sys::gtk_label_new(message.as_ptr());
+		gtk_sys::gtk_label_set_xalign(label as *mut gtk_sys::GtkLabel, 0.0);
 		let entry = gtk_sys::gtk_entry_new();
 		gtk_sys::gtk_entry_set_text(entry as *mut gtk_sys::GtkEntry, value.as_ptr());
+		gtk_sys::gtk_entry_set_activates_default(entry as *mut gtk_sys::GtkEntry, 1);
 		if password {
 			gtk_sys::gtk_entry_set_visibility(entry as *mut gtk_sys::GtkEntry, 0);
 		}
 
-		gtk_sys::gtk_box_pack_start(content as *mut gtk_sys::GtkBox, label, 0, 0, 6);
-		gtk_sys::gtk_box_pack_start(content as *mut gtk_sys::GtkBox, entry, 0, 0, 6);
+		gtk_sys::gtk_box_pack_start(content as *mut gtk_sys::GtkBox, label, 0, 0, 0);
+		gtk_sys::gtk_box_pack_start(content as *mut gtk_sys::GtkBox, entry, 0, 0, 0);
 		gtk_sys::gtk_widget_show_all(dialog);
 
 		let response = gtk_sys::gtk_dialog_run(dialog as *mut gtk_sys::GtkDialog);
@@ -68,11 +79,14 @@ fn text_input_multiline(p: &TextInput<'_>) -> Option<String> {
 
 	unsafe {
 		gtk_sys::gtk_window_set_title(dialog as *mut gtk_sys::GtkWindow, title.as_ptr());
+		gtk_sys::gtk_window_set_default_size(dialog as *mut gtk_sys::GtkWindow, 500, 380);
 		gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, cancel.as_ptr(), gtk_sys::GTK_RESPONSE_CANCEL);
 		gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, ok.as_ptr(), gtk_sys::GTK_RESPONSE_OK);
 
 		let content = gtk_sys::gtk_dialog_get_content_area(dialog as *mut gtk_sys::GtkDialog);
+		style_dialog_layout(dialog);
 		let label = gtk_sys::gtk_label_new(message.as_ptr());
+		gtk_sys::gtk_label_set_xalign(label as *mut gtk_sys::GtkLabel, 0.0);
 		let scrolled = gtk_sys::gtk_scrolled_window_new(ptr::null_mut(), ptr::null_mut());
 		let text_view = gtk_sys::gtk_text_view_new();
 		let buffer = gtk_sys::gtk_text_view_get_buffer(text_view as *mut gtk_sys::GtkTextView);
@@ -81,8 +95,8 @@ fn text_input_multiline(p: &TextInput<'_>) -> Option<String> {
 		gtk_sys::gtk_widget_set_size_request(scrolled, 480, 280);
 		gtk_sys::gtk_container_add(scrolled as *mut gtk_sys::GtkContainer, text_view);
 
-		gtk_sys::gtk_box_pack_start(content as *mut gtk_sys::GtkBox, label, 0, 0, 6);
-		gtk_sys::gtk_box_pack_start(content as *mut gtk_sys::GtkBox, scrolled, 1, 1, 6);
+		gtk_sys::gtk_box_pack_start(content as *mut gtk_sys::GtkBox, label, 0, 0, 0);
+		gtk_sys::gtk_box_pack_start(content as *mut gtk_sys::GtkBox, scrolled, 1, 1, 0);
 		gtk_sys::gtk_widget_show_all(dialog);
 
 		let response = gtk_sys::gtk_dialog_run(dialog as *mut gtk_sys::GtkDialog);

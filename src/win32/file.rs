@@ -18,7 +18,7 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	let title = utf16cs(p.title);
 	let filter = build_windows_filter(p.filter);
 	let path = utils::abspath(p.path);
-	let mut file_buffer = initial_file_buffer(path.as_ref());
+	let mut file_buffer = initial_file_buffer(path.as_deref());
 
 	let mut open_file_name = OPENFILENAMEW::default();
 	open_file_name.lStructSize = std::mem::size_of::<OPENFILENAMEW>() as u32;
@@ -43,7 +43,7 @@ fn pick_files_impl(p: &FileDialog<'_>, allow_multiple_selects: bool) -> Option<V
 	let title = utf16cs(p.title);
 	let filter = build_windows_filter(p.filter);
 	let path = utils::abspath(p.path);
-	let mut file_buffer = initial_file_buffer(path.as_ref());
+	let mut file_buffer = initial_file_buffer(path.as_deref());
 
 	let mut open_file_name = OPENFILENAMEW::default();
 	open_file_name.lStructSize = std::mem::size_of::<OPENFILENAMEW>() as u32;
@@ -67,8 +67,12 @@ fn pick_files_impl(p: &FileDialog<'_>, allow_multiple_selects: bool) -> Option<V
 	parse_open_file_buffer(&file_buffer)
 }
 
-fn initial_file_buffer(file: &Path) -> Vec<u16> {
+fn initial_file_buffer(file: Option<&Path>) -> Vec<u16> {
 	let mut buffer = vec![0u16; 16 * 1024];
+	let Some(file) = file else {
+		return buffer;
+	};
+
 	if file.as_os_str().is_empty() {
 		return buffer;
 	}

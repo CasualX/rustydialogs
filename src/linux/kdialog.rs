@@ -57,13 +57,17 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	let filter_string = filter_string(p.filter);
 	let file_path = utils::abspath(p.path);
+	let file_path = file_path.as_deref().map(Path::as_os_str).unwrap_or(os("."));
+
 	let args = [
 		os("--title"), os(p.title),
-		os("--getopenfilename"), file_path.as_os_str(), os(&filter_string),
+		os("--getopenfilename"), file_path, os(&filter_string),
 		os("--multiple"),
 		os("--separate-output"),
 	];
+
 	let args = if multiple { &args[..] } else { &args[..args.len() - 2] };
+
 	let (code, output) = invoke_output_bytes("kdialog", args);
 	if code != Some(0) {
 		return None;
@@ -78,10 +82,11 @@ fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	let filter_string = filter_string(p.filter);
 	let file_path = utils::abspath(p.path);
+	let file_path = file_path.as_deref().map(Path::as_os_str).unwrap_or(os("."));
 
 	let args = [
 		os("--title"), os(p.title),
-		os("--getsavefilename"), file_path.as_os_str(), os(&filter_string),
+		os("--getsavefilename"), file_path, os(&filter_string),
 	];
 
 	let (code, output) = invoke_output_bytes("kdialog", &args);

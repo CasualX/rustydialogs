@@ -17,22 +17,19 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 		gtk4_sys::gtk_color_chooser_set_rgba(dialog as *mut gtk4_sys::GtkColorChooser, &rgba);
 	}
 
-	let response = run_dialog(dialog as *mut gtk4_sys::GtkDialog);
-	if response != gtk4_sys::GTK_RESPONSE_OK {
-		unsafe {
-			gtk4_sys::gtk_window_destroy(dialog as *mut gtk4_sys::GtkWindow);
+	run_dialog_f(dialog as *mut gtk4_sys::GtkDialog, |response| {
+		if response != gtk4_sys::GTK_RESPONSE_OK {
+			return None;
 		}
-		return None;
-	}
 
-	unsafe {
-		gtk4_sys::gtk_color_chooser_get_rgba(dialog as *mut gtk4_sys::GtkColorChooser, &mut rgba);
-		gtk4_sys::gtk_window_destroy(dialog as *mut gtk4_sys::GtkWindow);
-	}
+		unsafe {
+			gtk4_sys::gtk_color_chooser_get_rgba(dialog as *mut gtk4_sys::GtkColorChooser, &mut rgba);
+		}
 
-	Some(ColorValue {
-		red: (rgba.red.clamp(0.0, 1.0) * 255.0).round() as u8,
-		green: (rgba.green.clamp(0.0, 1.0) * 255.0).round() as u8,
-		blue: (rgba.blue.clamp(0.0, 1.0) * 255.0).round() as u8,
+		Some(ColorValue {
+			red: (rgba.red.clamp(0.0, 1.0) * 255.0).round() as u8,
+			green: (rgba.green.clamp(0.0, 1.0) * 255.0).round() as u8,
+			blue: (rgba.blue.clamp(0.0, 1.0) * 255.0).round() as u8,
+		})
 	})
 }

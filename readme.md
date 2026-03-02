@@ -6,59 +6,37 @@ Rusty Dialogs
 [![docs.rs](https://docs.rs/rustydialogs/badge.svg)](https://docs.rs/rustydialogs)
 [![Check](https://github.com/CasualX/rustydialogs/actions/workflows/check.yml/badge.svg)](https://github.com/CasualX/rustydialogs/actions/workflows/check.yml)
 
-Rusty Dialogs is a Rust library that provides a simple and cross-platform way to display native dialog boxes.
+Rusty Dialogs is a Rust library that provides a simple and cross-platform way to display native dialog boxes and notifications.
 
 Dialogs
 -------
 
-The library supports the following types of dialogs: MessageBox, FileDialog, TextInput, ColorPicker, and Notification.
+The library supports the following types of dialogs: [MessageBox](https://docs.rs/rustydialogs/latest/rustydialogs/struct.MessageBox.html), [FileDialog](https://docs.rs/rustydialogs/latest/rustydialogs/struct.FileDialog.html), [TextInput](https://docs.rs/rustydialogs/latest/rustydialogs/struct.TextInput.html), [ColorPicker](https://docs.rs/rustydialogs/latest/rustydialogs/struct.ColorPicker.html), and [Notification](https://docs.rs/rustydialogs/latest/rustydialogs/struct.Notification.html).
 
 Platform Support
 ----------------
 
-A reasonable effort is made to support the following platforms:
-
-- Windows 7 and later through Win32 API, with optional WinRT toast notifications (feature `winrt-toast`)
-- Linux with Zenity or KDialog installed, with GTK3 or GTK4 (feature `gtk3` / `gtk4`) or with XDG desktop portals (feature `xdg-portal`)
-- macOS with `osascript` available or natively with AppKit (feature `appkit`)
+See [testreport.md](testreport.md) for details on supported dialog types and features per platform and backend.
 
 ### Windows
 
-On Windows, the library uses the legacy Win32-based common dialogs API to display native dialog boxes.
+Win32-based legacy dialogs compatible with any COM apartment model.
 
-For `Notification`, enable feature `winrt-toast` to use WinRT toast notifications.
-Without this feature, Windows notifications use HTA-based implementation.
+Optional WinRT-Toast notifications are available on Windows 10 and later. (feature: `winrt-toast`)
 
-### Linux
+### Linux & BSDs
 
-On Linux, `gtk4` and `gtk3` are optional features.
-Do not enable both in the same binary: GTK performs a runtime check for mixed major versions and will abort if `gtk3` and `gtk4` are linked together.
+By default, executable-based backends (`kdialog` and `zenity`) are used.
 
-When enabled, Rusty Dialogs prefers backends in this order:
+Optional GTK3 and GTK4 backends are available with libnotify-based notifications. (feature: `gtk3`, `gtk4`)
 
-1. `gtk4` / `gtk3`
-2. `zenity` / `kdialog`
-
-Without `gtk4` and `gtk3`, Rusty Dialogs uses `zenity` or `kdialog` and tries to choose a reasonable program based on the desktop environment.
-If neither is available, the library will panic.
-
-You can override backend selection with the `RUSTY_DIALOGS_BACKEND` environment variable.
-Supported values are `gtk4`, `gtk3`, `xdg-portal`, `zenity`, and `kdialog`.
-
-The `xdg-portal` backend (feature `xdg-portal`) is currently partial:
-
-- Implemented: FileDialog, FolderDialog, Notification
-- Not implemented in this backend: MessageBox, TextInput, ColorPicker (immediately returns `None`)
+XDG desktop portal support is also available, but limited to file and folder dialogs. (feature: `xdg-portal`)
 
 ### macOS
 
-Rusty Dialogs provides two (compile-time) macOS backends:
+By default, AppleScript-based dialogs are used.
 
-- `osascript` (AppleScript) backend, enabled by default.
-
-  `TextInputMode::MultiLine` behaves like single-line input.
-
-- Native AppKit backend (on the main thread), opt-in with feature `appkit`.
+Optional AppKit-based dialogs and notifications are also available. (feature: `appkit`)
 
 Development
 -----------
@@ -78,6 +56,74 @@ To test the Windows implementation on Linux, you can use the `wine` compatibilit
 cargo build --examples --target=x86_64-pc-windows-gnu
 wine target/x86_64-pc-windows-gnu/debug/examples/message_box.exe
 ```
+
+Testing
+-------
+
+Use the interactive test runner example:
+
+```bash
+cargo run --example tests
+```
+
+Run one dialog group directly:
+
+```bash
+cargo run --example tests -- m  # MessageBox
+cargo run --example tests -- o  # OpenFileDialog
+cargo run --example tests -- s  # SaveFileDialog
+cargo run --example tests -- f  # FolderDialog
+cargo run --example tests -- t  # TextInput
+cargo run --example tests -- c  # ColorPicker
+cargo run --example tests -- n  # Notification
+```
+
+The runner is interactive and will:
+
+- Show what to click for each step
+- Ask for retry on failures
+- Print environment info (`rustc -V`, `cargo -V`, OS, backend env)
+
+### Windows
+
+Run the full test suite with:
+
+```bash
+cargo run --example tests
+cargo run --example tests --features winrt-toast -- n
+```
+
+### Linux & BSDs
+
+Run the full test suite with different backends:
+
+```bash
+RUSTY_DIALOGS_BACKEND=gtk3 cargo run --example tests --features gtk3
+RUSTY_DIALOGS_BACKEND=gtk4 cargo run --example tests --features gtk4
+RUSTY_DIALOGS_BACKEND=xdg-portal cargo run --example tests --features xdg-portal
+RUSTY_DIALOGS_BACKEND=kdialog cargo run --example tests
+RUSTY_DIALOGS_BACKEND=zenity cargo run --example tests
+```
+
+Run the full Windows test suite under Wine with:
+
+```bash
+cargo build --examples --target=x86_64-pc-windows-gnu
+wine target/x86_64-pc-windows-gnu/debug/examples/tests.exe
+```
+
+### macOS
+
+Run the full test suite with backends:
+
+```bash
+cargo run --example tests
+cargo run --example tests --features appkit
+```
+
+### Pull Request Template
+
+Run at least one default run for your host OS, plus any backend/feature combinations touched by your PR, and attach the output/report in the PR.
 
 License
 -------

@@ -19,7 +19,7 @@ pub fn show(p: &MessageBox<'_>) -> Option<MessageResult> {
 			gtk_sys::GTK_DIALOG_MODAL,
 			msg_type,
 			gtk_sys::GTK_BUTTONS_NONE,
-			c"%s".as_ptr(),
+			c"\n%s".as_ptr(),
 			message.as_ptr(),
 		)
 	};
@@ -36,19 +36,23 @@ pub fn show(p: &MessageBox<'_>) -> Option<MessageResult> {
 		match p.buttons {
 			MessageButtons::Ok => {
 				gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, ok_label.as_ptr(), gtk_sys::GTK_RESPONSE_OK);
+				gtk_sys::gtk_dialog_set_default_response(dialog as *mut gtk_sys::GtkDialog, gtk_sys::GTK_RESPONSE_OK);
 			}
 			MessageButtons::OkCancel => {
 				gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, cancel_label.as_ptr(), gtk_sys::GTK_RESPONSE_CANCEL);
 				gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, ok_label.as_ptr(), gtk_sys::GTK_RESPONSE_OK);
+				gtk_sys::gtk_dialog_set_default_response(dialog as *mut gtk_sys::GtkDialog, gtk_sys::GTK_RESPONSE_OK);
 			}
 			MessageButtons::YesNo => {
 				gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, no_label.as_ptr(), gtk_sys::GTK_RESPONSE_NO);
 				gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, yes_label.as_ptr(), gtk_sys::GTK_RESPONSE_YES);
+				gtk_sys::gtk_dialog_set_default_response(dialog as *mut gtk_sys::GtkDialog, gtk_sys::GTK_RESPONSE_YES);
 			}
 			MessageButtons::YesNoCancel => {
 				gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, cancel_label.as_ptr(), gtk_sys::GTK_RESPONSE_CANCEL);
 				gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, no_label.as_ptr(), gtk_sys::GTK_RESPONSE_NO);
 				gtk_sys::gtk_dialog_add_button(dialog as *mut gtk_sys::GtkDialog, yes_label.as_ptr(), gtk_sys::GTK_RESPONSE_YES);
+				gtk_sys::gtk_dialog_set_default_response(dialog as *mut gtk_sys::GtkDialog, gtk_sys::GTK_RESPONSE_YES);
 			}
 		}
 	}

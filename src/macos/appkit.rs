@@ -121,9 +121,10 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 		panel.setCanCreateDirectories(true);
 
 		if let Some(directory) = directory {
-			let path = utils::abspath(Some(directory));
-			let dir_url = path_to_file_url(&path);
-			panel.setDirectoryURL(Some(&dir_url));
+			if let Some(path) = utils::abspath(Some(directory)) {
+				let dir_url = path_to_file_url(path.as_ref());
+				panel.setDirectoryURL(Some(&dir_url));
+			}
 		}
 
 		let response = panel.runModal();
@@ -344,7 +345,9 @@ fn initial_directory(initial_path: Option<&Path>) -> Option<PathBuf> {
 }
 
 fn initial_directory_and_name(initial_path: Option<&Path>) -> (Option<PathBuf>, Option<String>) {
-	let path = utils::abspath(initial_path);
+	let Some(path) = utils::abspath(initial_path) else {
+		return (None, None);
+	};
 
 	if path.is_dir() {
 		return (Some(path.into_owned()), None);

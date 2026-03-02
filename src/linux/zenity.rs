@@ -17,7 +17,7 @@ pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 		MessageIcon::Info => args.push(os("--info")),
 		MessageIcon::Warning => args.push(os("--warning")),
 		MessageIcon::Error => args.push(os("--error")),
-		MessageIcon::Question => args.push(os("--question")),
+		MessageIcon::Question => args.push(os("--info")), // --question hardcodes NoYes buttons in the wrong order...
 	}
 
 	match p.buttons {
@@ -41,9 +41,9 @@ pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 			args.push(os("--ok-label"));
 			args.push(os("Yes"));
 			args.push(os("--extra-button"));
-			args.push(os("Cancel"));
-			args.push(os("--extra-button"));
 			args.push(os("No"));
+			args.push(os("--extra-button"));
+			args.push(os("Cancel"));
 		}
 	}
 
@@ -52,11 +52,21 @@ pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 		exit_status_error(status);
 	}
 
+	fn default(buttons: MessageButtons, success: bool) -> Option<MessageResult> {
+		match buttons {
+			MessageButtons::Ok => Some(MessageResult::Ok),
+			MessageButtons::OkCancel => if success { Some(MessageResult::Ok) } else { Some(MessageResult::Cancel) },
+			MessageButtons::YesNo => if success { Some(MessageResult::Yes) } else { Some(MessageResult::No) },
+			MessageButtons::YesNoCancel => if success { Some(MessageResult::Yes) } else { Some(MessageResult::No) },
+		}
+	}
+
 	match output.trim() {
 		"OK" => Some(MessageResult::Ok),
 		"Cancel" => Some(MessageResult::Cancel),
 		"Yes" => Some(MessageResult::Yes),
 		"No" => Some(MessageResult::No),
+		"" => default(p.buttons, status == Some(0)),
 		_ => Some(MessageResult::Ok), // Default to Ok for unknown output
 	}
 }
@@ -72,14 +82,17 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 }
 
 fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
-	let file_path = utils::abspath(p.path);
 	let mut args = vec![
 		os("--file-selection"),
 		os("--title"),
 		os(p.title),
-		os("--filename"),
-		file_path.as_os_str(),
 	];
+
+	let file_path = utils::abspath(p.path);
+	if let Some(file_path) = &file_path {
+		args.push(os("--filename"));
+		args.push(file_path.as_os_str());
+	}
 
 	if multiple {
 		args.push(os("--multiple"));
@@ -105,16 +118,19 @@ fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 }
 
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
-	let file_path = utils::abspath(p.path);
 	let mut args = vec![
 		os("--file-selection"),
 		os("--save"),
 		os("--confirm-overwrite"),
 		os("--title"),
 		os(p.title),
-		os("--filename"),
-		file_path.as_os_str(),
 	];
+
+	let file_path = utils::abspath(p.path);
+	if let Some(file_path) = &file_path {
+		args.push(os("--filename"));
+		args.push(file_path.as_os_str());
+	}
 
 	let filters = filter_strings(p.filter);
 	for filter in &filters {

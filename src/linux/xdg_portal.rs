@@ -104,20 +104,21 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 
 fn portal_file_options(p: &FileDialog<'_>) -> PropMap {
 	let mut options: PropMap = PropMap::new();
-	let path = utils::abspath(p.path);
-	if path.is_dir() {
-		if let Some(folder) = portal_directory_bytes(&path) {
-			options.insert(String::from("current_folder"), Variant(Box::new(folder)));
-		}
-	}
-	else {
-		if let Some(parent) = path.parent() {
-			if let Some(folder) = portal_directory_bytes(parent) {
+	if let Some(path) = utils::abspath(p.path) {
+		if path.is_dir() {
+			if let Some(folder) = portal_directory_bytes(&path) {
 				options.insert(String::from("current_folder"), Variant(Box::new(folder)));
 			}
 		}
-		if let Some(name) = path.file_name() {
-			options.insert(String::from("current_name"), Variant(Box::new(name.to_string_lossy().to_string())));
+		else {
+			if let Some(parent) = path.parent() {
+				if let Some(folder) = portal_directory_bytes(parent) {
+					options.insert(String::from("current_folder"), Variant(Box::new(folder)));
+				}
+			}
+			if let Some(name) = path.file_name() {
+				options.insert(String::from("current_name"), Variant(Box::new(name.to_string_lossy().to_string())));
+			}
 		}
 	}
 	let filters = portal_filters(p.filter);
