@@ -41,6 +41,8 @@ pub enum MessageIcon {
 	/// Error icon.
 	Error,
 	/// Question icon.
+	///
+	/// Note: Some platforms/backends/dialogs may not have a distinct question icon and may use the information icon instead.
 	Question,
 }
 
@@ -101,9 +103,9 @@ pub struct MessageBox<'a> {
 impl<'a> MessageBox<'a> {
 	/// Show the dialog.
 	///
-	/// Prefer to check if the dialog result matches `Some(Ok)` or `Some(Yes)` rather than checking for `Some(No)` or `Some(Cancel)`.
+	/// Prefer to check if the dialog result matches `Some(Ok)` or `Some(Yes)` rather than checking for `Some(No)`, `Some(Cancel)` or `None`.
 	///
-	/// When the dialog is dismissed (closing the dialog or pressing ESC), the result maybe `None` or may be any of the message results even if that button is not present (e.g. `Some(Cancel)`).
+	/// When the dialog is dismissed (press Cancel, close the dialog, or pressing ESC), the result maybe `None` or may be any of the message results even if that button is not present (e.g. `Some(Cancel)`).
 	#[inline]
 	pub fn show(&self) -> Option<MessageResult> {
 		message_box(self)
@@ -319,6 +321,17 @@ impl<'a> ColorPicker<'a> {
 	}
 }
 
+/// Notification duration for notifications.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum NotifyDuration {
+	/// Short duration for notifications, typically around 5 seconds.
+	Short,
+	/// Long duration for notifications, typically around 10 seconds.
+	Long,
+	/// Infinite duration for notifications, which do not automatically close.
+	Infinite,
+}
+
 /// Notification.
 ///
 /// Shows a brief message to the user without blocking their interaction with the application.
@@ -336,7 +349,7 @@ impl<'a> ColorPicker<'a> {
 /// 	title: "Task Complete",
 /// 	message: "All files were processed successfully.",
 /// 	icon: rustydialogs::MessageIcon::Info,
-/// 	timeout: rustydialogs::Notification::SHORT_TIMEOUT,
+/// 	duration: rustydialogs::NotifyDuration::Short,
 /// }.show();
 /// ```
 #[derive(Copy, Clone, Debug)]
@@ -352,25 +365,19 @@ pub struct Notification<'a> {
 	/// The icon to show in the notification.
 	// Future: Change to optional Option<MessageIcon>
 	pub icon: MessageIcon,
-	/// Timeout in milliseconds after which the notification should automatically close.
-	///
-	/// A value less than or equal to `0` means that the notification will not automatically close.
+	/// The timeout duration for the notification popup.
 	///
 	/// This is a best-effort hint: some backends may ignore it and use their own default timeout, or may not support timeouts at all.
-	// Future: Change to dedicated duration type
-	pub timeout: i32,
+	pub duration: NotifyDuration,
 }
 
 impl<'a> Notification<'a> {
-	/// Short timeout duration in milliseconds for notification popups.
-	pub const SHORT_TIMEOUT: i32 = 5000;
-	/// Long timeout duration in milliseconds for notification popups.
-	pub const LONG_TIMEOUT: i32 = 10000;
-
 	/// Perform any necessary setup for notifications, such as registering the application with the notification system.
 	///
 	/// This step is optional, when skipped the library will attempt to perform any necessary setup automatically when showing the first notification,
 	/// but this method can be used to ensure that the setup is done at a specific time in the application lifecycle.
+	///
+	/// Returns `true` if the setup was successful or is not needed, and `false` if the setup failed and notifications may not work properly.
 	///
 	/// ### Windows
 	///
@@ -383,9 +390,8 @@ impl<'a> Notification<'a> {
 	///
 	/// When using the `libnotify` backend, this registers the application with the notification system using the provided application identifier.
 	#[inline]
-	pub fn setup(app_id: &str) {
-		// Future: Return whether setup was successful (API breaking change)
-		notify_setup(app_id);
+	pub fn setup(app_id: &str) -> bool {
+		notify_setup(app_id)
 	}
 
 	/// Show the notification.

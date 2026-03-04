@@ -53,7 +53,7 @@ pub fn notify(p: &Notification<'_>) {
 	copy_wide_trunc(&mut data.szInfoTitle, p.title);
 	copy_wide_trunc(&mut data.szInfo, p.message);
 	data.dwInfoFlags = icon_to_flags(p.icon);
-	data.Anonymous.uTimeout = timeout_hint(p.timeout);
+	data.Anonymous.uTimeout = timeout_hint(p.duration);
 
 	unsafe {
 		let _ = Shell_NotifyIconW(NIM_MODIFY, &data);
@@ -120,12 +120,11 @@ impl Drop for TrayState {
 	}
 }
 
-fn timeout_hint(timeout_ms: i32) -> u32 {
-	if timeout_ms <= 0 {
-		0
-	}
-	else {
-		timeout_ms.clamp(1_000, 30_000) as u32
+fn timeout_hint(duration: NotifyDuration) -> u32 {
+	match duration {
+		NotifyDuration::Short => 5000,
+		NotifyDuration::Long => 10000,
+		NotifyDuration::Infinite => 0,
 	}
 }
 

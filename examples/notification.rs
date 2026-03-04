@@ -19,7 +19,7 @@ fn main() {
 		title: "Rusty Dialogs",
 		message: "This is a native notification.",
 		icon,
-		timeout: rustydialogs::Notification::SHORT_TIMEOUT,
+		duration: rustydialogs::NotifyDuration::Short,
 	};
 
 	notify.show();

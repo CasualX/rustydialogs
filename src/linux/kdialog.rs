@@ -1,5 +1,3 @@
-use std::ffi::OsStr;
-
 use super::*;
 
 
@@ -195,7 +193,11 @@ pub fn notify(p: &Notification<'_>) {
 		MessageIcon::Error => "dialog-error",
 	};
 
-	let timeout_seconds = timeout_seconds(p.timeout).to_string();
+	let timeout_seconds = match p.duration {
+		NotifyDuration::Short => "5",
+		NotifyDuration::Long => "10",
+		NotifyDuration::Infinite => "2147483647", // KDialog does not support infinite timeouts, so we use the maximum possible timeout instead.
+	};
 
 	let args = &[
 		os("--title"), os(p.title),
@@ -205,14 +207,4 @@ pub fn notify(p: &Notification<'_>) {
 	];
 
 	invoke_async("kdialog", args);
-}
-
-fn timeout_seconds(timeout: i32) -> u64 {
-	if timeout <= 0 {
-		// KDialog does not support infinite timeouts, so we use the maximum possible timeout instead.
-		i32::MAX as u64
-	}
-	else {
-		(timeout as u32).div_ceil(1000) as u64
-	}
 }

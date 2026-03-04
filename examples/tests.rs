@@ -383,7 +383,7 @@ fn test_notification() {
 		title: "[INFO] Notification",
 		message: "This is a test notification.\nIt should appear as a native notification on your system.",
 		icon: rustydialogs::MessageIcon::Info,
-		timeout: rustydialogs::Notification::SHORT_TIMEOUT,
+		duration: rustydialogs::NotifyDuration::Short,
 	});
 
 	notify(&rustydialogs::Notification {
@@ -391,7 +391,7 @@ fn test_notification() {
 		title: "[WARN] Notification",
 		message: "This is a test notification.\nIt should appear as a native notification on your system.",
 		icon: rustydialogs::MessageIcon::Warning,
-		timeout: rustydialogs::Notification::SHORT_TIMEOUT,
+		duration: rustydialogs::NotifyDuration::Short,
 	});
 
 	notify(&rustydialogs::Notification {
@@ -399,7 +399,7 @@ fn test_notification() {
 		title: "[ERROR] Notification",
 		message: "This is a test notification.\nIt should appear as a native notification on your system.",
 		icon: rustydialogs::MessageIcon::Error,
-		timeout: rustydialogs::Notification::SHORT_TIMEOUT,
+		duration: rustydialogs::NotifyDuration::Short,
 	});
 
 	notify(&rustydialogs::Notification {
@@ -407,7 +407,7 @@ fn test_notification() {
 		title: "[QUESTION] Notification",
 		message: "This is a test notification.\nIt should appear as a native notification on your system.",
 		icon: rustydialogs::MessageIcon::Question,
-		timeout: rustydialogs::Notification::SHORT_TIMEOUT,
+		duration: rustydialogs::NotifyDuration::Short,
 	});
 }
 

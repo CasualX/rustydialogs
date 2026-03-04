@@ -1,6 +1,5 @@
 use std::ffi::{CStr, CString, OsStr};
 use std::os::raw::c_char;
-use std::os::unix::ffi::OsStrExt;
 use std::{ptr, sync};
 
 use glib_sys::{g_free, g_slist_free, GSList};

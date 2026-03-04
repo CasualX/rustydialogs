@@ -1,4 +1,4 @@
-use std::{path, process, str, sync};
+use std::{env, path, process, str, sync};
 use std::ffi::OsStr;
 use std::fmt::Write;
 use std::os::unix::ffi::OsStrExt;
@@ -33,30 +33,18 @@ enum Backend {
 }
 
 static BACKEND: sync::LazyLock<Backend> = sync::LazyLock::new(|| {
-	fn getenv(key: &std::ffi::CStr) -> Option<&[u8]> {
-		unsafe {
-			let ptr = libc::getenv(key.as_ptr());
-			if ptr.is_null() {
-				None
-			}
-			else {
-				Some(std::ffi::CStr::from_ptr(ptr).to_bytes())
-			}
-		}
-	}
-
 	// Check RUSTY_DIALOGS_BACKEND env var first, then check for kdialog and zenity executables.
-	if let Some(backend) = getenv(c"RUSTY_DIALOGS_BACKEND") {
-		match backend {
-			b"kdialog" => return Backend::KDialog,
-			b"zenity" => return Backend::Zenity,
+	if let Ok(backend) = env::var("RUSTY_DIALOGS_BACKEND") {
+		match backend.as_str() {
+			"kdialog" => return Backend::KDialog,
+			"zenity" => return Backend::Zenity,
 			#[cfg(feature = "xdg-portal")]
-			b"xdg-portal" => return Backend::XdgPortal,
+			"xdg-portal" => return Backend::XdgPortal,
 			#[cfg(feature = "gtk4")]
-			b"gtk4" => return Backend::Gtk4,
+			"gtk4" => return Backend::Gtk4,
 			#[cfg(feature = "gtk3")]
-			b"gtk3" => return Backend::Gtk3,
-			_ => panic!("Invalid RUSTY_DIALOGS_BACKEND value: {backend:?}", backend = str::from_utf8(backend).unwrap_or("<invalid utf-8>")),
+			"gtk3" => return Backend::Gtk3,
+			_ => panic!("Invalid RUSTY_DIALOGS_BACKEND value: {backend:?}"),
 		}
 	}
 
@@ -71,11 +59,7 @@ static BACKEND: sync::LazyLock<Backend> = sync::LazyLock::new(|| {
 	}
 
 	#[allow(unreachable_code)] {
-		fn isenv(key: &std::ffi::CStr) -> bool {
-			unsafe { !libc::getenv(key.as_ptr()).is_null() }
-		}
-
-		let desktop = getenv(c"XDG_CURRENT_DESKTOP").or_else(|| getenv(c"DESKTOP_SESSION")).and_then(|s| str::from_utf8(s).ok());
+		let desktop = env::var("XDG_CURRENT_DESKTOP").or_else(|_| env::var("DESKTOP_SESSION")).ok();
 		let preferred_programs = if let Some(desktop) = desktop {
 			if desktop.contains("gnome") {
 				[Backend::Zenity, Backend::KDialog]
@@ -87,7 +71,7 @@ static BACKEND: sync::LazyLock<Backend> = sync::LazyLock::new(|| {
 				[Backend::Zenity, Backend::KDialog]
 			}
 		}
-		else if isenv(c"GNOME_DESKTOP_SESSION_ID") {
+		else if env::var_os("GNOME_DESKTOP_SESSION_ID").is_some() {
 			[Backend::Zenity, Backend::KDialog]
 		}
 		else {

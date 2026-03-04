@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::os::unix::ffi::OsStrExt;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc;
 use std::{thread, time};
@@ -155,7 +154,7 @@ fn portal_directory_bytes(path: &Path) -> Option<Vec<u8>> {
 		path.to_path_buf()
 	}
 	else {
-		std::env::current_dir().ok()?.join(path)
+		env::current_dir().ok()?.join(path)
 	};
 
 	if !absolute.is_dir() {
@@ -286,8 +285,7 @@ pub fn notify(p: &Notification<'_>) {
 		return;
 	}
 
-	if p.timeout > 0 {
-		let timeout = p.timeout as u64;
+	if let Some(timeout) = duration_milliseconds(p.duration) {
 		let app_id = app_id.to_string();
 		thread::spawn(move || {
 			thread::sleep(time::Duration::from_millis(timeout));
@@ -302,6 +300,14 @@ pub fn notify(p: &Notification<'_>) {
 				(app_id.as_str(), notification_id.as_str()),
 			);
 		});
+	}
+}
+
+fn duration_milliseconds(duration: NotifyDuration) -> Option<u64> {
+	match duration {
+		NotifyDuration::Short => Some(5000),
+		NotifyDuration::Long => Some(10000),
+		NotifyDuration::Infinite => None,
 	}
 }
 

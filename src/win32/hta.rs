@@ -27,8 +27,8 @@ pub fn notify(p: &Notification<'_>) {
 		MessageIcon::Question => ("#7C3AED", "#EDE9FE", "❔"),
 	};
 	let close_script = utils::FromFn(|f| {
-		if p.timeout > 0 {
-			write!(f, "idTimer = window.setTimeout(\"window.Close\", {}, \"VBScript\")", p.timeout)?;
+		if let Some(timeout) = duration_milliseconds(p.duration) {
+			write!(f, "idTimer = window.setTimeout(\"window.Close\", {}, \"VBScript\")", timeout)?;
 		}
 		Ok(())
 	});
@@ -122,6 +122,14 @@ End Sub
 	}
 
 	let _ = process::Command::new("mshta.exe").arg(&path).spawn();
+}
+
+fn duration_milliseconds(duration: NotifyDuration) -> Option<u32> {
+	match duration {
+		NotifyDuration::Short => Some(5000),
+		NotifyDuration::Long => Some(10000),
+		NotifyDuration::Infinite => None,
+	}
 }
 
 fn html_escape(value: &str) -> String {

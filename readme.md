@@ -22,25 +22,31 @@ See [testreport.md](testreport.md) for details on supported dialog types and fea
 
 ### Windows
 
-Win32-based legacy dialogs compatible with any COM apartment model.
+Extensively tested on Windows 10 and 11.
 
-By default, notifications use a tray icon with balloon tips.
+- Win32-based legacy dialogs compatible with any COM apartment model.
 
-Optional WinRT-Toast notifications are available on Windows 10 and later. (feature: `winrt-toast`)
+- By default, notifications use a tray icon with balloon tips.
+
+- Optional WinRT-Toast notifications are available on Windows 10 and later. (feature: `winrt-toast`)
 
 ### Linux & BSDs
 
-By default, executable-based backends (`kdialog` and `zenity`) are used.
+Extensively tested on Linux Ubuntu 24 LTS.
 
-Optional GTK3 and GTK4 backends are available with libnotify-based notifications. (feature: `gtk3`, `gtk4`)
+- By default, executable-based backends (`kdialog` and `zenity`) are used.
 
-XDG desktop portal support is also available, but limited to file and folder dialogs. (feature: `xdg-portal`)
+- Optional GTK3 and GTK4 backends are available with libnotify-based notifications. (feature: `gtk3`, `gtk4`)
+
+- XDG desktop portal support is also available, but limited to file and folder dialogs. (feature: `xdg-portal`)
 
 ### macOS
 
-By default, AppleScript-based dialogs are used.
+Untested on macOS. No testreport yet.
 
-Optional AppKit-based dialogs and notifications are also available. (feature: `appkit`)
+- By default, AppleScript-based dialogs are used.
+
+- Optional AppKit-based dialogs and notifications are also available. (feature: `appkit`)
 
 Development
 -----------

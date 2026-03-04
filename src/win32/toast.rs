@@ -183,7 +183,10 @@ impl Drop for ComApartment {
 }
 
 fn toast_xml(p: &Notification<'_>) -> String {
-	let duration = if p.timeout > 0 && p.timeout <= 7000 { "short" } else { "long" };
+	let duration = match p.duration {
+		NotifyDuration::Short => "short",
+		NotifyDuration::Long | NotifyDuration::Infinite => "long",
+	};
 	let title = xml_escape(p.title);
 	let message = xml_escape(p.message);
 	let icon = match p.icon {

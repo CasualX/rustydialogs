@@ -1,6 +1,5 @@
 use std::ffi::{CStr, CString, OsStr};
 use std::os::raw::{c_char, c_void};
-use std::os::unix::ffi::OsStrExt;
 use std::{ptr, sync};
 
 use gtk4_gio_sys::{g_file_get_path, g_list_model_get_item, g_list_model_get_n_items, GFile, GListModel};

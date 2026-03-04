@@ -36,10 +36,10 @@ pub fn notify(p: &Notification<'_>) {
 		MessageIcon::Error => (libnotify_sys::NOTIFY_URGENCY_CRITICAL, c"dialog-error"),
 	};
 
-	let timeout = if p.timeout <= 0 {
-		libnotify_sys::NOTIFY_EXPIRES_NEVER
-	} else {
-		p.timeout
+	let timeout = match p.duration {
+		NotifyDuration::Short => 5000,
+		NotifyDuration::Long => 10000,
+		NotifyDuration::Infinite => libnotify_sys::NOTIFY_EXPIRES_NEVER,
 	};
 
 	let title = cstring(p.title);

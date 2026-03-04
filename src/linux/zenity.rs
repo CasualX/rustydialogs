@@ -1,6 +1,3 @@
-use std::ffi::OsStr;
-use std::os::unix::ffi::OsStrExt;
-
 use super::*;
 
 
@@ -241,7 +238,7 @@ fn temp_file_path(prefix: &str) -> PathBuf {
 	let nanos = std::time::SystemTime::now()
 		.duration_since(std::time::UNIX_EPOCH)
 		.map_or(0, |d| d.as_nanos());
-	std::env::temp_dir().join(format!("{prefix}-{}-{nanos}.txt", process::id()))
+	env::temp_dir().join(format!("{prefix}-{}-{nanos}.txt", process::id()))
 }
 
 
@@ -325,17 +322,17 @@ pub fn notify(p: &Notification<'_>) {
 	];
 
 	let timeout_storage;
-	if let Some(timeout_seconds) = timeout_seconds(p.timeout) {
+	if let Some(timeout_seconds) = duration_seconds(p.duration) {
 		timeout_storage = format!("--timeout={timeout_seconds}");
 		args.push(os(&timeout_storage));
 	}
 
 	invoke_async("zenity", &args);
 }
-
-fn timeout_seconds(timeout_milliseconds: i32) -> Option<u64> {
-	if timeout_milliseconds <= 0 {
-		return None;
+fn duration_seconds(duration: NotifyDuration) -> Option<u64> {
+	match duration {
+		NotifyDuration::Short => Some(5),
+		NotifyDuration::Long => Some(10),
+		NotifyDuration::Infinite => None,
 	}
-	Some((timeout_milliseconds as u32).div_ceil(1000) as u64)
 }
