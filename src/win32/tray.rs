@@ -10,7 +10,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 	CreateWindowExW, DestroyIcon, DestroyWindow, HICON, IDI_APPLICATION, LoadIconW,
 	WINDOW_EX_STYLE, WINDOW_STYLE,
 };
-use windows::core::{w, PCWSTR};
+use windows::core::{w, Error, PCWSTR};
 
 use super::*;
 
@@ -25,10 +25,10 @@ struct TrayState {
 unsafe impl Send for TrayState {}
 unsafe impl Sync for TrayState {}
 
-static TRAY_STATE: OnceLock<Option<TrayState>> = OnceLock::new();
+fn init(app_id: &str) -> Option<&TrayState> {
+	static TRAY_STATE: OnceLock<Option<TrayState>> = OnceLock::new();
 
-pub fn setup(app_id: &str) {
-	let _ = TRAY_STATE.get_or_init(|| {
+	TRAY_STATE.get_or_init(|| {
 		match TrayState::create(app_id) {
 			Ok(state) => Some(state),
 			Err(error) => {
@@ -36,13 +36,15 @@ pub fn setup(app_id: &str) {
 				None
 			},
 		}
-	});
+	}).as_ref()
+}
+
+pub fn setup(app_id: &str) -> bool {
+	init(app_id).is_some()
 }
 
 pub fn notify(p: &Notification<'_>) {
-	setup(p.app_id);
-
-	let Some(Some(state)) = TRAY_STATE.get() else {
+	let Some(state) = init(p.app_id) else {
 		return;
 	};
 
@@ -60,6 +62,10 @@ pub fn notify(p: &Notification<'_>) {
 
 impl TrayState {
 	fn create(app_id: &str) -> windows::core::Result<Self> {
+		if app_id.is_empty() {
+			return Err(Error::new(windows::core::HRESULT(0x80070057u32 as i32), "Application identifier cannot be empty"));
+		}
+
 		let hwnd = unsafe {
 			CreateWindowExW(
 				WINDOW_EX_STYLE::default(),

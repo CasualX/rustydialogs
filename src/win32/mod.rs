@@ -67,12 +67,12 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 }
 
 #[inline]
-pub fn notify_setup(_app_id: &str) {
+pub fn notify_setup(app_id: &str) -> bool {
 	#[cfg(feature = "winrt-toast")] {
-		toast::setup(_app_id)
+		toast::setup(app_id)
 	}
 	#[cfg(not(feature = "winrt-toast"))] {
-		tray::setup(_app_id)
+		tray::setup(app_id)
 	}
 }
 

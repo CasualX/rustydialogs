@@ -67,7 +67,7 @@ pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 		"Yes" => Some(MessageResult::Yes),
 		"No" => Some(MessageResult::No),
 		"" => default(p.buttons, status == Some(0)),
-		_ => Some(MessageResult::Ok), // Default to Ok for unknown output
+		_ => None,
 	}
 }
 

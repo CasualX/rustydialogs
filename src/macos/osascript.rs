@@ -246,12 +246,13 @@ end run
 }
 
 #[inline]
-pub fn notify_setup(_app_id: &str) {
+pub fn notify_setup(_app_id: &str) -> bool {
 	// Nothing here yet...
+	true
 }
 
 pub fn notify(p: &Notification<'_>) {
-	if p.app_id.is_empty() {
+	if !notify_setup(p.app_id) {
 		return;
 	}
 

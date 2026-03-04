@@ -227,12 +227,17 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 }
 
 #[inline]
-pub fn notify_setup(_app_id: &str) {
+pub fn notify_setup(_app_id: &str) -> bool {
 	// No explicit setup required for NSUserNotificationCenter.
+	true
 }
 
 #[allow(deprecated)]
 pub fn notify(p: &Notification<'_>) {
+	if !notify_setup(p.app_id) {
+		return;
+	}
+
 	run_on_main(|_mtm| {
 		let center = NSUserNotificationCenter::defaultUserNotificationCenter();
 		let notification = NSUserNotification::new();

@@ -15,21 +15,23 @@ use windows::UI::Notifications::{ToastNotification, ToastNotificationManager};
 
 use super::*;
 
-pub fn setup(app_id: &str) {
+pub fn setup(app_id: &str) -> bool {
 	static SETUP_ONCE: OnceLock<bool> = OnceLock::new();
 
-	let _ = SETUP_ONCE.get_or_init(|| {
+	*SETUP_ONCE.get_or_init(|| {
 		if let Err(error) = ensure_start_menu_shortcut(app_id) {
 			eprintln!("rustydialogs: failed to register toast shortcut during setup: {error}");
 			return false;
 		}
 
-		return true;
-	});
+		true
+	})
 }
 
 pub fn notify(p: &Notification<'_>) {
-	setup(p.app_id);
+	if !setup(p.app_id) {
+		return;
+	}
 
 	if let Err(error) = try_notify(p) {
 		eprintln!("rustydialogs: WinRT toast notify failed: {error}");

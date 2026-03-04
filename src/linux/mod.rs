@@ -203,9 +203,12 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 }
 
 #[inline]
-pub fn notify_setup(_app_id: &str) {
+pub fn notify_setup(app_id: &str) -> bool {
 	#[cfg(feature = "libnotify")] {
-		notify::init(_app_id);
+		notify::init(app_id)
+	}
+	#[cfg(not(feature = "libnotify"))] {
+		!app_id.is_empty()
 	}
 }
 
@@ -242,19 +245,19 @@ fn os(s: &str) -> &OsStr {
 
 #[track_caller]
 fn invoke(program: &str, args: &[&OsStr]) -> Option<i32> {
-	let mut child = process::Command::new(program).args(args).spawn().unwrap();
-	child.wait().unwrap().code()
+	let mut child = process::Command::new(program).args(args).spawn().expect("failed to spawn process");
+	child.wait().expect("failed to wait for process").code()
 }
 
 #[track_caller]
 fn invoke_async(program: &str, args: &[&OsStr]) {
-	let _ = process::Command::new(program).args(args).spawn().unwrap();
+	let _ = process::Command::new(program).args(args).spawn().expect("failed to spawn process");
 }
 
 #[track_caller]
 fn invoke_output(program: &str, args: &[&OsStr]) -> (Option<i32>, String) {
-	let output = process::Command::new(program).args(args).output().unwrap();
-	let mut stdout = String::from_utf8(output.stdout).unwrap();
+	let output = process::Command::new(program).args(args).output().expect("failed to spawn process");
+	let mut stdout = String::from_utf8(output.stdout).expect("failed to parse stdout as UTF-8");
 	if stdout.ends_with('\n') {
 		stdout.pop();
 	}
@@ -264,7 +267,7 @@ fn invoke_output(program: &str, args: &[&OsStr]) -> (Option<i32>, String) {
 
 #[track_caller]
 fn invoke_output_bytes(program: &str, args: &[&OsStr]) -> (Option<i32>, Vec<u8>) {
-	let output = process::Command::new(program).args(args).output().unwrap();
+	let output = process::Command::new(program).args(args).output().expect("failed to spawn process");
 	(output.status.code(), output.stdout)
 }
 

@@ -350,12 +350,14 @@ pub struct Notification<'a> {
 	/// The message to display in the notification.
 	pub message: &'a str,
 	/// The icon to show in the notification.
+	// Future: Change to optional Option<MessageIcon>
 	pub icon: MessageIcon,
 	/// Timeout in milliseconds after which the notification should automatically close.
 	///
 	/// A value less than or equal to `0` means that the notification will not automatically close.
 	///
 	/// This is a best-effort hint: some backends may ignore it and use their own default timeout, or may not support timeouts at all.
+	// Future: Change to dedicated duration type
 	pub timeout: i32,
 }
 
@@ -382,7 +384,8 @@ impl<'a> Notification<'a> {
 	/// When using the `libnotify` backend, this registers the application with the notification system using the provided application identifier.
 	#[inline]
 	pub fn setup(app_id: &str) {
-		notify_setup(app_id)
+		// Future: Return whether setup was successful (API breaking change)
+		notify_setup(app_id);
 	}
 
 	/// Show the notification.

@@ -219,10 +219,10 @@ fn result_uris(results: &HashMap<String, Variant<Box<dyn RefArg + 'static>>>) ->
 fn parse_file_uri(uri: &str) -> Option<PathBuf> {
 	let value = uri.strip_prefix("file://")?;
 	let decoded = percent_decode(value)?;
-	Some(PathBuf::from(decoded))
+	Some(PathBuf::from(OsStr::from_bytes(&decoded)))
 }
 
-fn percent_decode(input: &str) -> Option<String> {
+fn percent_decode(input: &str) -> Option<Vec<u8>> {
 	let bytes = input.as_bytes();
 	let mut out = Vec::with_capacity(bytes.len());
 	let mut index = 0;
@@ -242,7 +242,7 @@ fn percent_decode(input: &str) -> Option<String> {
 			index += 1;
 		}
 	}
-	String::from_utf8(out).ok()
+	Some(out)
 }
 
 fn hex_digit(digit: u8) -> Option<u8> {
