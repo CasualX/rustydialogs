@@ -22,6 +22,8 @@ See [testreport.md](testreport.md) for details on supported dialog types and fea
 
 Win32-based legacy dialogs compatible with any COM apartment model.
 
+By default, notifications use a tray icon with balloon tips.
+
 Optional WinRT-Toast notifications are available on Windows 10 and later. (feature: `winrt-toast`)
 
 ### Linux & BSDs

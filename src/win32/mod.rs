@@ -14,7 +14,7 @@ mod color;
 #[cfg(feature = "winrt-toast")]
 mod toast;
 #[cfg(not(feature = "winrt-toast"))]
-mod notify;
+mod tray;
 
 fn utf16cs(value: &str) -> Vec<u16> {
 	let mut encoded = Vec::with_capacity(value.len() + 1);
@@ -71,6 +71,9 @@ pub fn notify_setup(_app_id: &str) {
 	#[cfg(feature = "winrt-toast")] {
 		toast::setup(_app_id)
 	}
+	#[cfg(not(feature = "winrt-toast"))] {
+		tray::setup(_app_id)
+	}
 }
 
 #[inline]
@@ -79,6 +82,6 @@ pub fn notify(p: &Notification<'_>) {
 		toast::notify(p)
 	}
 	#[cfg(not(feature = "winrt-toast"))] {
-		notify::notify(p)
+		tray::notify(p)
 	}
 }

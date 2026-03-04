@@ -78,7 +78,7 @@ wine ./target/x86_64-pc-windows-gnu/debug/examples/tests.exe
 
 - _FolderDialog_: The starting directory doesn't really work well.
 
-- _Notification_: Neither HTA nor WinRT Toast notifications are supported under Wine.
+- _Notification_: Tray Icon based notifications work. HTA and WinRT Toast notifications are not supported.
 
 Host: Windows
 -------------
