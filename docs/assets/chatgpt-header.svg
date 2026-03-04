@@ -1,0 +1,51 @@
+<svg width="1200" height="360" viewBox="0 0 1200 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF7A18"/>
+      <stop offset="100%" stop-color="#FF4D00"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="360" rx="32" fill="#1E293B"/>
+
+  <!-- Left dialog illustration -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="80" width="360" height="200" rx="5" fill="#0F172A"/>
+    
+    <!-- Title bar -->
+    <rect x="80" y="80" width="360" height="48" rx="5" fill="#1E293B"/>
+    <circle cx="110" cy="104" r="6" fill="#FF5F56"/>
+    <circle cx="130" cy="104" r="6" fill="#FFBD2E"/>
+    <circle cx="150" cy="104" r="6" fill="#27C93F"/>
+
+    <!-- Message lines -->
+    <rect x="110" y="150" width="300" height="14" rx="5" fill="#334155"/>
+    <rect x="110" y="174" width="220" height="14" rx="5" fill="#334155"/>
+
+    <!-- Buttons -->
+    <rect x="220" y="210" width="80" height="34" rx="5" fill="#334155"/>
+    <rect x="310" y="210" width="100" height="34" rx="5" fill="url(#accent)"/>
+  </g>
+
+  <!-- Subtle floating UI hints -->
+  <rect x="470" y="110" width="24" height="24" rx="6" fill="#334155"/>
+  <rect x="510" y="110" width="24" height="24" rx="6" fill="url(#accent)"/>
+  <circle cx="560" cy="122" r="12" fill="#334155"/>
+
+  <!-- Title Text -->
+  <text x="520" y="180" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="56" font-weight="700" fill="#F8FAFC">
+    Rusty Dialogs
+  </text>
+
+  <!-- Subtitle -->
+  <text x="520" y="220" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="400" fill="#CBD5E1">
+    Cross-platform native dialogs for Rust
+  </text>
+
+  <!-- Accent underline -->
+  <rect x="520" y="235" width="420" height="4" rx="2" fill="url(#accent)"/>
+</svg>

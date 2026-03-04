@@ -6,6 +6,8 @@ Rusty Dialogs
 [![docs.rs](https://docs.rs/rustydialogs/badge.svg)](https://docs.rs/rustydialogs)
 [![Check](https://github.com/CasualX/rustydialogs/actions/workflows/check.yml/badge.svg)](https://github.com/CasualX/rustydialogs/actions/workflows/check.yml)
 
+![Header image](docs/assets/rustydialogs-header.svg)
+
 Rusty Dialogs is a Rust library that provides a simple and cross-platform way to display native dialog boxes and notifications.
 
 Dialogs

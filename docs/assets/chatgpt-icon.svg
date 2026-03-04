@@ -1,0 +1,33 @@
+<svg width="256" height="256" viewBox="64 64 384 384" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF7A18"/>
+      <stop offset="100%" stop-color="#FF4D00"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Main dialog window -->
+  <g filter="url(#shadow)">
+    <rect x="96" y="128" width="320" height="240" rx="5" fill="#0F172A"/>
+    
+    <!-- Title bar -->
+    <rect x="96" y="128" width="320" height="56" rx="5" fill="#1E293B"/>
+    <circle cx="128" cy="156" r="8" fill="#FF5F56"/>
+    <circle cx="152" cy="156" r="8" fill="#FFBD2E"/>
+    <circle cx="176" cy="156" r="8" fill="#27C93F"/>
+    
+    <!-- Message lines -->
+    <rect x="128" y="208" width="256" height="16" rx="5" fill="#334155"/>
+    <rect x="128" y="236" width="200" height="16" rx="5" fill="#334155"/>
+    
+    <!-- Action buttons -->
+    <rect x="208" y="280" width="80" height="36" rx="5" fill="#334155"/>
+    <rect x="296" y="280" width="88" height="36" rx="5" fill="url(#accent)"/>
+  </g>
+
+  <!-- Subtle accent corner -->
+  <path d="M368 368 L416 368 L416 416 Z" fill="url(#accent)" opacity="0.9"/>
+</svg>

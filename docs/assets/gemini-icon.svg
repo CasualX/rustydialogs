@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="iconGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3C4655" />
+      <stop offset="100%" stop-color="#2C3440" />
+    </linearGradient>
+    <filter id="iconShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  
+  <rect x="25.6" y="25.6" width="460.8" height="460.8" rx="48" ry="48" fill="url(#iconGradient)" filter="url(#iconShadow)" />
+  
+  <g transform="translate(140.8, 140.8)">
+    <rect x="0" y="0" width="230.4" height="179.2" rx="5" ry="5" fill="none" stroke="#FFFFFF" stroke-width="20" opacity="0.9" />
+    <path d="M 0 44.8 L 230.4 44.8" stroke="#FFFFFF" stroke-width="20" opacity="0.9" />
+    <circle cx="28.8" cy="22.4" r="10.24" fill="#E5732F" />
+    <circle cx="64" cy="22.4" r="10.24" fill="#FFFFFF" opacity="0.8" />
+    <circle cx="99.2" cy="22.4" r="10.24" fill="#FFFFFF" opacity="0.8" />
+    
+    <text x="115.2" y="140.8" font-family="Verdana, sans-serif" font-size="102.4" font-weight="bold" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central">R</text>
+    <path d="M 179.2 128 a 25.6 25.6 0 0 1 25.6 25.6 a 25.6 25.6 0 0 1 -25.6 25.6 a 25.6 25.6 0 0 1 -25.6 -25.6 z M 179.2 138.24 v 10.24 M 179.2 168.96 v 10.24 M 168.96 153.6 h 10.24 M 189.44 153.6 h 10.24" stroke="#E5732F" stroke-width="7.68" fill="none"/>
+  </g>
+</svg>
