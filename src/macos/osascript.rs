@@ -96,7 +96,7 @@ on run argv
 
 	set outputLines to {}
 	repeat with selectedFile in selectedFiles
-		set end of outputLines to POSIX path of selectedFile
+		set end of outputLines to POSIX path of (contents of selectedFile)
 	end repeat
 
 	set oldDelims to AppleScript's text item delimiters
@@ -110,19 +110,11 @@ end run
 	let script = if multiple { script_multi } else { script_single };
 	let output = invoke_output(script, &[p.title, &initial_directory])?;
 
-	let files = output
-		.lines()
-		.map(str::trim)
-		.filter(|line| !line.is_empty())
-		.map(PathBuf::from)
-		.collect::<Vec<_>>();
-
-	if files.is_empty() {
-		None
+	let paths = output.lines().map(PathBuf::from).collect::<Vec<_>>();
+	if paths.is_empty() {
+		return None;
 	}
-	else {
-		Some(files)
-	}
+	Some(paths)
 }
 
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
@@ -156,15 +148,11 @@ on run argv
 end run
 "#;
 
-	let output = invoke_output(script, &[p.title, &initial_directory, default_name])?;
-	let path = output.trim();
-
+	let path = invoke_output(script, &[p.title, &initial_directory, default_name])?;
 	if path.is_empty() {
-		None
+		return None;
 	}
-	else {
-		Some(PathBuf::from(path))
-	}
+	Some(PathBuf::from(path))
 }
 
 pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
@@ -187,15 +175,11 @@ on run argv
 end run
 "#;
 
-	let output = invoke_output(script, &[p.title, initial_directory])?;
-	let path = output.trim();
-
+	let path = invoke_output(script, &[p.title, initial_directory])?;
 	if path.is_empty() {
-		None
+		return None;
 	}
-	else {
-		Some(PathBuf::from(path))
-	}
+	Some(PathBuf::from(path))
 }
 
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {
@@ -270,15 +254,14 @@ end run
 
 #[track_caller]
 fn invoke_output(script: &str, args: &[&str]) -> Option<String> {
-	let output = process::Command::new("osascript").arg("-e").arg(script).args(args).output().unwrap();
+	let output = process::Command::new("osascript").arg("-e").arg(script).args(args).output().expect("failed to execute osascript");
 
 	if !output.status.success() {
 		return None;
 	}
 
-	let mut stdout = String::from_utf8(output.stdout)
-		.unwrap_or_else(|error| String::from_utf8_lossy(error.as_bytes()).to_string());
-	while matches!(stdout.chars().last(), Some('\n' | '\r')) {
+	let mut stdout = String::from_utf8(output.stdout).expect("failed to parse stdout as UTF-8");
+	while stdout.ends_with('\n') || stdout.ends_with('\r') {
 		stdout.pop();
 	}
 	Some(stdout)
@@ -286,7 +269,7 @@ fn invoke_output(script: &str, args: &[&str]) -> Option<String> {
 
 #[track_caller]
 fn invoke_async(script: &str, args: &[&str]) {
-	let _ = process::Command::new("osascript").arg("-e").arg(script).args(args).spawn().unwrap();
+	let _ = process::Command::new("osascript").arg("-e").arg(script).args(args).spawn().expect("failed to execute osascript");
 }
 
 fn initial_directory(initial_path: Option<&Path>) -> Option<PathBuf> {

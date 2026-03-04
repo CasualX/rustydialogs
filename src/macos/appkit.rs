@@ -18,6 +18,7 @@ use objc2_app_kit::{
 	NSSecureTextField,
 	NSTextField,
 	NSTextView,
+	NSView,
 };
 #[allow(deprecated)] // NSUserNotification is deprecated
 use objc2_foundation::{NSPoint, NSRect, NSSize, NSString, NSURL, NSUserNotification, NSUserNotificationCenter};
@@ -61,10 +62,12 @@ pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 			MessageButtons::YesNo => &[MessageResult::Yes, MessageResult::No],
 			MessageButtons::YesNoCancel => &[MessageResult::Yes, MessageResult::No, MessageResult::Cancel],
 		};
+
 		let index = if response == NSAlertFirstButtonReturn { 0 }
 		else if response == NSAlertSecondButtonReturn { 1 }
 		else if response == NSAlertThirdButtonReturn { 2 }
 		else { !0 }; // Out of bounds, will be handled below
+
 		results.get(index).copied()
 	})
 }
@@ -103,7 +106,7 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 			return None;
 		}
 
-		panel.URL().and_then(|url| url_to_pathbuf(&url))
+		panel.URL().and_then(url_into_pathbuf)
 	})
 }
 
@@ -132,7 +135,7 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 			return None;
 		}
 
-		panel.URL().and_then(|url| url_to_pathbuf(&url))
+		panel.URL().and_then(url_into_pathbuf)
 	})
 }
 
@@ -156,7 +159,8 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 
 		match mode {
 			TextInputMode::Password => {
-				let field = NSSecureTextField::new(mtm);
+				let frame = text_field_frame();
+				let field = NSSecureTextField::initWithFrame(NSSecureTextField::alloc(mtm), frame);
 				let value = NSString::from_str(value_text);
 				field.setStringValue(&value);
 				alert.setAccessoryView(Some(&field));
@@ -185,8 +189,10 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 				else { Some(field.string().to_string()) }
 			}
 			TextInputMode::SingleLine => {
+				let frame = text_field_frame();
 				let value = NSString::from_str(value_text);
-				let field = NSTextField::textFieldWithString(&value, mtm);
+				let field = NSTextField::initWithFrame(NSTextField::alloc(mtm), frame);
+				field.setStringValue(&value);
 				alert.setAccessoryView(Some(&field));
 
 				let response = alert.runModal();
@@ -211,18 +217,20 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 		alert.addButtonWithTitle(&ok);
 		alert.addButtonWithTitle(&cancel);
 
-		let well = NSColorWell::colorWellWithStyle(NSColorWellStyle::Default, mtm);
+		let container = NSView::initWithFrame(NSView::alloc(mtm), color_well_container_frame());
+		let well = NSColorWell::initWithFrame(NSColorWell::alloc(mtm), color_well_frame());
+		let _ = NSColorWellStyle::Default;
 		let initial = color_value_to_nscolor(initial);
 		well.setColor(&initial);
-		alert.setAccessoryView(Some(&well));
+		container.addSubview(&well);
+		alert.setAccessoryView(Some(&container));
 
 		let response = alert.runModal();
-		if response == NSAlertFirstButtonReturn {
-			nscolor_to_color_value(&well.color())
+		if response != NSAlertFirstButtonReturn {
+			return None;
 		}
-		else {
-			None
-		}
+
+		nscolor_to_color_value(&well.color())
 	})
 }
 
@@ -284,24 +292,11 @@ fn run_open_panel(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 		}
 
 		if multiple {
-			let urls = panel.URLs();
-			let mut files = Vec::new();
-			for url in urls.to_vec() {
-				if let Some(path) = url_to_pathbuf(&url) {
-					files.push(path);
-				}
-			}
-			if files.is_empty() {
-				None
-			}
-			else {
-				Some(files)
-			}
+			let files = panel.URLs().iter().filter_map(url_into_pathbuf).collect();
+			Some(files)
 		}
 		else {
-			panel.URL()
-				.and_then(|url| url_to_pathbuf(&url))
-				.map(|path| vec![path])
+			panel.URL().and_then(url_into_pathbuf).map(|path| vec![path])
 		}
 	})
 }
@@ -309,6 +304,18 @@ fn run_open_panel(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 fn path_to_file_url(path: &Path) -> Retained<NSURL> {
 	let path = NSString::from_str(&path.to_string_lossy());
 	NSURL::fileURLWithPath(&path)
+}
+
+fn text_field_frame() -> NSRect {
+	NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(320.0, 24.0))
+}
+
+fn color_well_container_frame() -> NSRect {
+	NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(320.0, 32.0))
+}
+
+fn color_well_frame() -> NSRect {
+	NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(120.0, 28.0))
 }
 
 fn color_value_to_nscolor(color: ColorValue) -> Retained<NSColor> {
@@ -339,7 +346,7 @@ fn component_to_u8(value: f64) -> u8 {
 	(value.clamp(0.0, 1.0) * 255.0).round() as u8
 }
 
-fn url_to_pathbuf(url: &NSURL) -> Option<PathBuf> {
+fn url_into_pathbuf(url: Retained<NSURL>) -> Option<PathBuf> {
 	let path = url.path()?;
 	Some(PathBuf::from(path.to_string()))
 }
