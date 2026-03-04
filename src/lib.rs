@@ -370,16 +370,16 @@ impl<'a> Notification<'a> {
 	/// This step is optional, when skipped the library will attempt to perform any necessary setup automatically when showing the first notification,
 	/// but this method can be used to ensure that the setup is done at a specific time in the application lifecycle.
 	///
-	/// ### Linux
-	///
-	/// When using the `libnotify` backend, this registers the application with the notification system using the provided application identifier.
-	///
 	/// ### Windows
 	///
 	/// By default, this initializes a process-wide tray icon used for balloon notifications.
 	///
 	/// When using the `winrt-toast` backend, this creates a Start Menu shortcut for the application with the provided application identifier, which is required for showing toast notifications on Windows.
 	/// It is recommended to call this method during application initialization before showing any notifications or the first notification may be skipped due to delays in the shortcut creation process.
+	///
+	/// ### Linux
+	///
+	/// When using the `libnotify` backend, this registers the application with the notification system using the provided application identifier.
 	#[inline]
 	pub fn setup(app_id: &str) {
 		notify_setup(app_id)

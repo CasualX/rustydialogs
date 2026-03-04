@@ -1,56 +1,57 @@
 # Copilot Instructions for rustydialogs
 
-## Big Picture
-- `rustydialogs` is a small cross-platform dialog abstraction crate: public API in `src/lib.rs`, platform backends in `src/linux/`, `src/windows/`, and `src/macos/`.
-- `src/lib.rs` defines dialog data types (`MessageBox`, `FileDialog`, `FolderDialog`, `TextInput`, `ColorPicker`, `Notification`) and thin `show`/`pick_*` methods that delegate to platform functions.
-- Linux backend selection happens once in `src/linux/mod.rs`.
-- Windows uses native Win32 APIs through the `windows` crate; backend dispatch and concrete implementation lives in `src/windows/`.
-- macOS uses `osascript`-based implementations in `src/macos/mod.rs`.
+## Big picture
+- `src/lib.rs` is the API surface: plain data structs + enums (`MessageBox`, `FileDialog`, `FolderDialog`, `TextInput`, `ColorPicker`, `Notification`) with thin forwarding methods.
+- Platform dispatch is compile-time + runtime:
+  - Linux/BSD: `src/linux/mod.rs` chooses backend once via `LazyLock<Backend>`.
+  - Windows: `src/win32/mod.rs` chooses notification backend on Cargo features.
+  - macOS: `src/macos/mod.rs` re-exports either `appkit` or `osascript` implementation.
+- Design intent is minimal abstraction: backend functions return `Option<T>` where cancel/unsupported generally maps to `None`.
 
-## Architectural Pattern to Follow
-- When adding/changing a dialog type, keep a **three-layer flow**:
-  1. Public struct + method in `src/lib.rs`
-  2. Platform dispatcher in each platform module (`src/linux/mod.rs`, `src/windows/mod.rs`, `src/macos/mod.rs`)
-  3. Concrete backend implementation files (`src/linux/*.rs`, `src/windows/*.rs`, and macOS logic in `src/macos/mod.rs`)
-- Keep backend functions named consistently (`show`, `pick_file`, `pick_files`, `save_file`, `folder_dialog`, `text_input`, etc.).
-- Prefer focused modules by concern on Windows (`src/windows/file.rs`, `folder.rs`, `message.rs`, `input.rs`, `color.rs`, `notify.rs`).
+## Architecture pattern to keep
+- For any dialog API change, update all three layers:
+  1. Public type/method in `src/lib.rs`
+  2. Per-platform dispatcher (`src/linux/mod.rs`, `src/win32/mod.rs`, `src/macos/mod.rs`)
+  3. Concrete backend modules (e.g. `src/linux/zenity.rs`, `src/win32/file.rs`, `src/macos/osascript.rs`)
+- Keep backend function names aligned (`message_box`, `pick_file`, `pick_files`, `save_file`, `folder_dialog`, `text_input`, `color_picker`, `notify`).
+- Preserve current style: tab indentation, concise helpers, no builder API.
 
-## Linux Backend Conventions
-- Build command args as `&OsStr` using helper `os(...)` from `src/linux/mod.rs`.
-- Use shared invocation helpers from `src/linux/mod.rs` (`invoke`, `invoke_output`, `invoke_output_bytes`, `invoke_async`) rather than ad-hoc `Command` code.
-- Treat non-success exit codes as cancel (`None`) unless the dialog semantics require special handling.
-- Parse command stdout as bytes for filesystem paths (`OsStrExt::from_bytes`) to avoid UTF-8 assumptions.
-- Respect backend selection env var: `RUSTY_DIALOGS_BACKEND=gtk4|gtk3|xdg-portal|zenity|kdialog` (feature-dependent).
+## Backend-specific conventions
+- Linux command backends (`kdialog`, `zenity`): build args as `&OsStr` using `os(...)`; invoke via shared helpers in `src/linux/mod.rs` (`invoke*`), not ad-hoc `Command` code.
+- Linux path parsing: read stdout as bytes (`invoke_output_bytes` + `OsStrExt::from_bytes`) for filesystem results.
+- Linux backend selection: honor `RUSTY_DIALOGS_BACKEND=gtk4|gtk3|xdg-portal|zenity|kdialog`; if unset, GTK features are preferred when compiled in.
+- `src/linux/xdg_portal.rs` is intentionally partial: message box/text input/color picker return `None`; file/folder are implemented.
+- Windows owner handling is active (`hwnd(p.owner)` in `src/win32/*`); Linux/macOS ignore `owner`.
+- macOS default path uses AppleScript in `src/macos/osascript.rs`; keep best-effort semantics (timeouts/notification behavior vary by OS).
 
-## Linux Backend Notes
-- Feature backends exist in addition to executable-based backends:
-  - `gtk4` backend in `src/linux/gtk4/`
-  - `gtk3` backend in `src/linux/gtk3/`
-  - `xdg-portal` backend in `src/linux/xdg_portal.rs` (currently partial)
-- If `gtk4` or `gtk3` feature is enabled, backend selection currently prefers GTK first.
+## Workflows that matter here
+- Run checks for the backend and target you changed. Do not stop after `cargo check --examples` on host target only.
+- Windows host (Windows checks only):
+  - Default Windows backend changes (`src/win32/**`): `cargo check --examples`
+  - WinRT toast changes (`src/win32/toast.rs` or toast wiring): `cargo check --examples --features winrt-toast`
+- macOS host (macOS checks only):
+  - AppleScript backend changes (`src/macos/osascript.rs` or osascript wiring): `cargo check --examples`
+  - AppKit backend changes (`src/macos/appkit.rs` or appkit wiring): `cargo check --examples --features appkit`
+- Linux host (full matrix; use this host to validate every platform/backend path):
+  - Linux default backends (`src/linux/kdialog.rs`, `src/linux/zenity.rs`, `src/linux/mod.rs`): `cargo check --examples`
+  - Linux GTK3 backend (`src/linux/gtk3/**`): `cargo check --examples --features gtk3`
+  - Linux GTK4 backend (`src/linux/gtk4/**`): `cargo check --examples --features gtk4`
+  - Linux XDG portal backend (`src/linux/xdg_portal.rs`): `cargo check --examples --features xdg-portal`
+  - Linux notification code using libnotify (`src/linux/notify.rs` or GTK notification plumbing): `cargo check --examples --features libnotify`
+  - Windows backend code from Linux (`src/win32/**`): `cargo check --examples --target=x86_64-pc-windows-gnu`
+  - macOS backend code from Linux (`src/macos/**`): `cargo check --examples --target=aarch64-apple-darwin`
+- Interactive smoke tests live in `examples/tests.rs`.
+  - Run all: `cargo run --example tests`
+  - Run one group: `cargo run --example tests -- m|o|s|f|t|c|n`
+  - Backend matrix examples: see `readme.md` and `testreport.md`.
+- Finish-up step for backend work and PR-ready changes:
+  - Strongly recommend running the appropriate interactive test group for each backend touched via `cargo run --example tests`.
+  - If asked, run the tests and capture stdout/stderr from that run.
+  - Compare observed behavior against the corresponding backend notes in `testreport/` and `testreport.md`.
+  - Discuss differences with the user and cross-check against the user’s notes before concluding behavior is expected.
+  - Do not assume backend quirks are acceptable without explicit user verification.
 
-## Windows Backend Conventions
-- Use UTF-16 conversion helper `utf16cs(...)` from `src/windows/mod.rs`.
-- Keep Win32 calls in small, dedicated modules; return `Option<...>` where user cancel maps to `None`.
-- For file/folder pickers, preserve current style: prepare buffers/structs (`OPENFILENAMEW`, `BROWSEINFOW`), call API, parse null-terminated output.
-- If you add new Windows APIs, update feature flags in `Cargo.toml` under `target.'cfg(windows)'.dependencies.windows.features`.
-
-## macOS Backend Conventions
-- Keep implementation centralized in `src/macos/mod.rs` unless complexity justifies splitting.
-- Use existing `osascript` invocation helpers/patterns; maintain `Option`-based cancel semantics.
-- Preserve documented best-effort behavior (e.g., multiline text input and notification timeout caveats).
-
-## Developer Workflows
-- Main validation command: `cargo check --examples`.
-- Cross-target checks used in this repo:
-  - `cargo check --examples --target=x86_64-pc-windows-gnu`
-  - `cargo check --examples --target=x86_64-unknown-linux-gnu`
-  - `cargo check --examples --target=aarch64-apple-darwin`
-- Example programs in `examples/` are the primary manual smoke tests; `examples/run_all.sh` runs them sequentially.
-- For Windows behavior from Linux, README documents using Wine after `cargo build --examples --target=x86_64-pc-windows-gnu`.
-
-## Practical Guardrails for Edits
-- Keep public API minimal and data-oriented (plain structs + enums, no builder pattern currently).
-- Match existing formatting/style (tabs, concise helper functions, `Option`-based cancel semantics).
-- Avoid introducing extra dependencies unless required by platform API usage.
-- Update/add an example in `examples/` when adding a new dialog capability.
+## Practical guardrails
+- Keep dependencies minimal; if new Win32 APIs are added, update `Cargo.toml` `windows.features`.
+- When adding dialog capabilities, also update at least one relevant example in `examples/`.
+- Prefer root-cause backend fixes over API-level workarounds; documented backend quirks are tracked in `testreport.md`.
