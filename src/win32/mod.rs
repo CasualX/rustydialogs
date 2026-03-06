@@ -1,13 +1,12 @@
-use std::fmt::Write;
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use windows::Win32::Foundation::HWND;
 
 use super::*;
 
+mod com;
 mod file;
-// mod file_com;
 mod folder;
-// mod folder_com;
+mod ifiledialog;
 mod input;
 mod message;
 mod color;
@@ -38,22 +37,31 @@ pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 
 #[inline]
 pub fn pick_file(p: &FileDialog<'_>) -> Option<std::path::PathBuf> {
+	// ifiledialog::pick_file(p)
 	file::pick_file(p)
 }
 
 #[inline]
 pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<std::path::PathBuf>> {
+	// ifiledialog::pick_files(p)
 	file::pick_files(p)
 }
 
 #[inline]
 pub fn save_file(p: &FileDialog<'_>) -> Option<std::path::PathBuf> {
+	// ifiledialog::save_file(p)
 	file::save_file(p)
 }
 
 #[inline]
 pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<std::path::PathBuf> {
+	// ifiledialog::folder_dialog(p)
 	folder::folder_dialog(p)
+}
+
+#[inline]
+pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<std::path::PathBuf>> {
+	ifiledialog::choose_folders(p)
 }
 
 #[inline]

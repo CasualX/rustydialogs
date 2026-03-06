@@ -26,6 +26,11 @@ pub fn folder_dialog(_p: &FolderDialog<'_>) -> Option<PathBuf> {
 }
 
 #[inline]
+pub fn choose_folders(_p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+	None
+}
+
+#[inline]
 pub fn text_input(_p: &TextInput<'_>) -> Option<String> {
 	None
 }

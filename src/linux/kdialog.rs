@@ -116,6 +116,11 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 		.map(|line| PathBuf::from(OsStr::from_bytes(line)))
 }
 
+pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+	// KDialog does not support multiple folder selection
+	folder_dialog(p).map(|path| vec![path])
+}
+
 fn filter_string(filter: Option<&[FileFilter<'_>]>) -> String {
 	let mut result = String::new();
 	if let Some(filter) = filter {

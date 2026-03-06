@@ -160,6 +160,19 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<path::PathBuf> {
 	}
 }
 
+pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<path::PathBuf>> {
+	match *BACKEND {
+		Backend::KDialog => kdialog::choose_folders(p),
+		Backend::Zenity => zenity::choose_folders(p),
+		#[cfg(feature = "xdg-portal")]
+		Backend::XdgPortal => xdg_portal::choose_folders(p),
+		#[cfg(feature = "gtk3")]
+		Backend::Gtk3 => gtk3::choose_folders(p),
+		#[cfg(feature = "gtk4")]
+		Backend::Gtk4 => gtk4::choose_folders(p),
+	}
+}
+
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 	match *BACKEND {
 		Backend::KDialog => kdialog::text_input(p),

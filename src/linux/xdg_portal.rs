@@ -78,11 +78,20 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 }
 
 pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+	choose_folders_impl(p, false).and_then(|paths| paths.into_iter().next())
+}
+
+pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+	choose_folders_impl(p, true)
+}
+
+fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	let conn = Connection::new_session().ok()?;
 	let proxy = conn.with_proxy(DESKTOP_BUS_NAME, DESKTOP_PATH, time::Duration::from_secs(30));
 
 	let mut options: PropMap = PropMap::new();
 	options.insert(String::from("directory"), Variant(Box::new(true)));
+	options.insert(String::from("multiple"), Variant(Box::new(multiple)));
 	if let Some(directory) = p.directory {
 		if let Some(folder) = portal_directory_bytes(directory) {
 			options.insert(String::from("current_folder"), Variant(Box::new(folder)));
@@ -98,7 +107,9 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 		return None;
 	}
 	let uris = result_uris(&results)?;
-	uris.into_iter().find_map(|uri| parse_file_uri(&uri))
+
+	let paths = uris.into_iter().filter_map(|uri| parse_file_uri(&uri)).collect();
+	Some(paths)
 }
 
 fn portal_file_options(p: &FileDialog<'_>) -> PropMap {

@@ -176,14 +176,18 @@ fn test_message_box() {
 	}
 }
 
+fn sorted<T: Ord>(mut items: Vec<T>) -> Vec<T> { items.sort(); items }
+
 fn test_save_file_dialog() {
 	println!("\n{}", Color("==== Testing SaveFileDialog ====", "120;190;255"));
 
+	let current_dir = env::current_dir().unwrap();
+
 	step("Select `readme.md` and press Save.",
-		Some(env::current_dir().unwrap().join("readme.md")),
+		Some(current_dir.join("readme.md")),
 		|| rustydialogs::FileDialog {
 			title: "[tests] SaveFileDialog",
-			path: None,
+			path: Some(&current_dir),
 			filter: Some(&[
 				rustydialogs::FileFilter {
 					desc: "Markdown Files",
@@ -202,7 +206,7 @@ fn test_save_file_dialog() {
 		None,
 		|| rustydialogs::FileDialog {
 			title: "[tests] Dismiss SaveFileDialog",
-			path: None,
+			path: Some(&current_dir),
 			filter: Some(&[
 				rustydialogs::FileFilter {
 					desc: "Text Files",
@@ -217,11 +221,13 @@ fn test_save_file_dialog() {
 fn test_open_file_dialog() {
 	println!("\n{}", Color("==== Testing OpenFileDialog ====", "120;190;255"));
 
+	let current_dir = env::current_dir().unwrap();
+
 	step("Select `Cargo.toml` and press Open.",
-		Some(env::current_dir().unwrap().join("Cargo.toml")),
+		Some(current_dir.join("Cargo.toml")),
 		|| rustydialogs::FileDialog {
 			title: "[tests] OpenFileDialog",
-			path: None,
+			path: Some(&current_dir),
 			filter: Some(&[
 				rustydialogs::FileFilter {
 					desc: "TOML Files",
@@ -231,23 +237,25 @@ fn test_open_file_dialog() {
 			owner: None,
 		}.pick_file()
 	);
+
 	step("Select multiple files (`Cargo.toml` and `readme.md`) and press Open.",
 		Some(vec![
-			env::current_dir().unwrap().join("Cargo.toml"),
-			env::current_dir().unwrap().join("readme.md"),
+			current_dir.join("Cargo.toml"),
+			current_dir.join("readme.md"),
 		]),
 		|| rustydialogs::FileDialog {
 			title: "[tests] OpenFileDialog (multiple)",
-			path: None,
+			path: Some(&current_dir),
 			filter: None,
 			owner: None,
-		}.pick_files()
+		}.pick_files().map(sorted)
 	);
+
 	step("Dismiss the dialog.",
 		None,
 		|| rustydialogs::FileDialog {
 			title: "[tests] Dismiss OpenFileDialog",
-			path: None,
+			path: Some(&current_dir),
 			filter: Some(&[
 				rustydialogs::FileFilter {
 					desc: "TOML Files",
@@ -262,20 +270,34 @@ fn test_open_file_dialog() {
 fn test_folder_dialog() {
 	println!("\n{}", Color("==== Testing FolderDialog ====", "120;190;255"));
 
+	let current_dir = env::current_dir().unwrap();
+
 	step("Select the `src` folder and press Open.",
-		Some(env::current_dir().unwrap().join("src")),
+		Some(current_dir.join("src")),
 		|| rustydialogs::FolderDialog {
 			title: "[tests] FolderDialog",
-			directory: None,
+			directory: Some(&current_dir),
 			owner: None,
 		}.show()
+	);
+
+	step("Select multiple folders (`src` and `examples`) and press Open.",
+		Some(vec![
+			current_dir.join("examples"),
+			current_dir.join("src"),
+		]),
+		|| rustydialogs::FolderDialog {
+			title: "[tests] FolderDialog (multiple)",
+			directory: Some(&current_dir),
+			owner: None,
+		}.choose_folders().map(sorted)
 	);
 
 	step("Dismiss the dialog.",
 		None,
 		|| rustydialogs::FolderDialog {
 			title: "[tests] Dismiss FolderDialog",
-			directory: None,
+			directory: Some(&current_dir),
 			owner: None,
 		}.show()
 	);

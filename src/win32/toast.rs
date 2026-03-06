@@ -2,10 +2,9 @@ use std::{env, mem, ptr};
 use std::sync::OnceLock;
 use windows::core::{w, Error, GUID, HSTRING, Interface, PCWSTR, PWSTR};
 use windows::Data::Xml::Dom::XmlDocument;
-use windows::Win32::Foundation::{PROPERTYKEY, RPC_E_CHANGED_MODE};
+use windows::Win32::Foundation::PROPERTYKEY;
 use windows::Win32::System::Com::{
-	CoCreateInstance, CoInitializeEx, CoTaskMemAlloc, CoUninitialize, IPersistFile, CLSCTX_INPROC_SERVER,
-	COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE,
+	CoCreateInstance, CoTaskMemAlloc, IPersistFile, CLSCTX_INPROC_SERVER,
 };
 use windows::Win32::System::Com::StructuredStorage::{PropVariantClear, PROPVARIANT};
 use windows::Win32::System::Variant::VT_LPWSTR;
@@ -69,7 +68,7 @@ fn ensure_start_menu_shortcut(app_id: &str) -> windows::core::Result<()> {
 
 	// If the shortcut already exists, recreate it to ensure the AppUserModelID is up to date (required for toasts to work).
 
-	let _com = ComApartment::init()?;
+	let _com = com::Apartment::init()?;
 
 	let shell_link: IShellLinkW = unsafe {
 		CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER)?
@@ -146,41 +145,6 @@ const PKEY_APP_USER_MODEL_ID: PROPERTYKEY = PROPERTYKEY {
 	pid: 5,
 };
 
-struct ComApartment {
-	should_uninitialize: bool,
-}
-
-impl ComApartment {
-	fn init() -> windows::core::Result<Self> {
-		let result = unsafe {
-			CoInitializeEx(None, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE)
-		};
-
-		if result.is_ok() {
-			Ok(Self {
-				should_uninitialize: true,
-			})
-		}
-		else if result == RPC_E_CHANGED_MODE {
-			Ok(Self {
-				should_uninitialize: false,
-			})
-		}
-		else {
-			Err(windows::core::Error::from(result))
-		}
-	}
-}
-
-impl Drop for ComApartment {
-	fn drop(&mut self) {
-		if self.should_uninitialize {
-			unsafe {
-				CoUninitialize();
-			}
-		}
-	}
-}
 
 fn toast_xml(p: &Notification<'_>) -> String {
 	let duration = match p.duration {

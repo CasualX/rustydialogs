@@ -2,13 +2,18 @@ fn main() {
 	let current_dir = std::env::current_dir().ok();
 
 	let dialog = rustydialogs::FolderDialog {
-		title: "Select a folder",
+		title: "Select folders",
 		directory: current_dir.as_deref(),
 		owner: None,
 	};
 
-	match dialog.show() {
-		Some(path) => println!("Selected folder: {}", path.display()),
+	match dialog.choose_folders() {
+		Some(paths) => {
+			println!("Selected folders:");
+			for path in paths {
+				println!("- {}", path.display());
+			}
+		}
 		None => println!("Folder selection canceled"),
 	}
 }

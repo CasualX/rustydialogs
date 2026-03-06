@@ -182,6 +182,43 @@ end run
 	Some(PathBuf::from(path))
 }
 
+pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+	let initial_directory = p.directory
+		.and_then(|path| path.to_str())
+		.unwrap_or("");
+
+	let script = r#"
+on run argv
+	set theTitle to item 1 of argv
+	set initialPath to item 2 of argv
+
+	if initialPath is "" then
+		set selectedFolders to choose folder with prompt theTitle with multiple selections allowed
+	else
+		set selectedFolders to choose folder with prompt theTitle default location (POSIX file initialPath) with multiple selections allowed
+	end if
+
+	set outputLines to {}
+	repeat with selectedFolder in selectedFolders
+		set end of outputLines to POSIX path of (contents of selectedFolder)
+	end repeat
+
+	set oldDelims to AppleScript's text item delimiters
+	set AppleScript's text item delimiters to linefeed
+	set joined to outputLines as text
+	set AppleScript's text item delimiters to oldDelims
+	return joined
+end run
+"#;
+
+	let output = invoke_output(script, &[p.title, initial_directory])?;
+	let paths = output.lines().filter(|line| !line.is_empty()).map(PathBuf::from).collect::<Vec<_>>();
+	if paths.is_empty() {
+		return None;
+	}
+	Some(paths)
+}
+
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 	let hidden = if p.mode == TextInputMode::Password { "true" } else { "false" };
 

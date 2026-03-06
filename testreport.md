@@ -29,6 +29,8 @@ RUSTY_DIALOGS_BACKEND=kdialog cargo run --example tests
 
 - _MessageBox_: Dismissing the dialog by pressing ESC returns `Some(Cancel)` when using `YesNoCancel` buttons and `None` otherwise.
 
+- _FolderDialog_: Does not support multi-selection and falls back to single-folder selection.
+
 ### GTK3
 
 ```bash
@@ -77,6 +79,8 @@ wine ./target/x86_64-pc-windows-gnu/debug/examples/tests.exe
 - _MessageBox_: Pressing ESC always returns `Some(Cancel)` regardless of the buttons used.
 
 - _FolderDialog_: The starting directory doesn't really work well.
+
+- _FolderDialog_: When selecting multiple folders, pressing Open does nothing, pressing Open again crashes the dialog inside Wine.
 
 - _Notification_: Tray Icon based notifications work. HTA and WinRT Toast notifications are not supported.
 

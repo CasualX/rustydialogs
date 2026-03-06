@@ -111,6 +111,14 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 }
 
 pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+	choose_folders_impl(p, false).and_then(|paths| paths.into_iter().next())
+}
+
+pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+	choose_folders_impl(p, true)
+}
+
+fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	let title_text = p.title;
 	let directory = p.directory;
 
@@ -120,7 +128,7 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 		panel.setTitle(Some(&title));
 		panel.setCanChooseDirectories(true);
 		panel.setCanChooseFiles(false);
-		panel.setAllowsMultipleSelection(false);
+		panel.setAllowsMultipleSelection(multiple);
 		panel.setCanCreateDirectories(true);
 
 		if let Some(directory) = directory {
@@ -135,7 +143,13 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 			return None;
 		}
 
-		panel.URL().and_then(url_into_pathbuf)
+		let paths = if multiple {
+			panel.URLs().iter().filter_map(url_into_pathbuf).collect::<Vec<_>>()
+		}
+		else {
+			panel.URL().and_then(url_into_pathbuf).into_iter().collect::<Vec<_>>()
+		};
+		if paths.is_empty() { None } else { Some(paths) }
 	})
 }
 

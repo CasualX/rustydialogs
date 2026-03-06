@@ -33,6 +33,10 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 	folder::folder_dialog(p)
 }
 
+pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+	folder::choose_folders(p)
+}
+
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 	input::text_input(p)
 }

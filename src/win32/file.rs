@@ -91,6 +91,7 @@ fn build_windows_filter(filter: Option<&[FileFilter<'_>]>) -> Option<Vec<u16>> {
 
 	let mut spec = String::new();
 	for entry in filter {
+		use std::fmt::Write as _;
 		_ = write!(spec, "{}\0{}\0", entry.desc, utils::PrintJoin { parts: entry.patterns, separator: ";" });
 	}
 	spec.push_str("All Files\0*.*\0\0");

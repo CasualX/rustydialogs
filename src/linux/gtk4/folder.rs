@@ -1,6 +1,14 @@
 use super::*;
 
 pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+	choose_folders_impl(p, false).and_then(|paths| paths.into_iter().next())
+}
+
+pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+	choose_folders_impl(p, true)
+}
+
+fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	ensure_gtk_initialized();
 
 	let title = cstring(p.title);
@@ -19,6 +27,7 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 	let chooser = native as *mut gtk4_sys::GtkFileChooser;
 
 	unsafe {
+		gtk4_sys::gtk_file_chooser_set_select_multiple(chooser, multiple as i32);
 		if let Some(directory) = p.directory {
 			let c_path = cstring(directory.to_string_lossy().as_ref());
 			let file = gtk4_gio_sys::g_file_new_for_path(c_path.as_ptr());
@@ -32,7 +41,15 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 			return None;
 		}
 
-		let file = unsafe { gtk4_sys::gtk_file_chooser_get_file(chooser) };
-		gfile_to_path_buf(file as *mut GFile)
+		let result = if multiple {
+			let model = unsafe { gtk4_sys::gtk_file_chooser_get_files(chooser) };
+			collect_file_model(model as *mut GListModel)
+		}
+		else {
+			let file = unsafe { gtk4_sys::gtk_file_chooser_get_file(chooser) };
+			gfile_to_path_buf(file as *mut GFile).into_iter().collect()
+		};
+
+		Some(result)
 	})
 }

@@ -216,6 +216,18 @@ impl<'a> FolderDialog<'a> {
 	pub fn show(&self) -> Option<std::path::PathBuf> {
 		folder_dialog(self)
 	}
+
+	/// Show the dialog, allowing the user to select multiple folders.
+	///
+	/// ### Platform-specific behavior
+	///
+	/// Backends that do not support selecting multiple folders fall back to a single-folder picker:
+	///
+	/// - Linux: `kdialog`.
+	#[inline]
+	pub fn choose_folders(&self) -> Option<Vec<std::path::PathBuf>> {
+		choose_folders(self)
+	}
 }
 
 /// Modes for text input dialogs.

@@ -147,6 +147,14 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 }
 
 pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+	choose_folders_impl(p, false).and_then(|paths| paths.into_iter().next())
+}
+
+pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+	choose_folders_impl(p, true)
+}
+
+fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	let directory = p.directory.unwrap_or_else(|| Path::new("."));
 	let args = [
 		os("--file-selection"),
@@ -155,17 +163,25 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 		os(p.title),
 		os("--filename"),
 		directory.as_os_str(),
+
+		os("--multiple"),
+		os("--separator"),
+		os("\n"),
 	];
+
+	let args = if multiple { &args[..] }
+	else { &args[..args.len() - 3] };
 
 	let (code, output) = invoke_output_bytes("zenity", &args);
 	if code != Some(0) {
 		return None;
 	}
 
-	output
+	Some(output
 		.split(|&byte| byte == b'\n')
-		.find(|line| !line.is_empty())
+		.filter(|line| !line.is_empty())
 		.map(|line| PathBuf::from(OsStr::from_bytes(line)))
+		.collect())
 }
 
 fn filter_strings(filter: Option<&[FileFilter<'_>]>) -> Vec<String> {
