@@ -16,15 +16,15 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	let title = utf16cs(p.title);
-	let filter = build_windows_filter(p.filter);
+	let filters = build_windows_filter(p.filters);
 	let path = utils::abspath(p.path);
 	let mut file_buffer = initial_file_buffer(path.as_deref());
 
 	let mut open_file_name = OPENFILENAMEW::default();
 	open_file_name.lStructSize = std::mem::size_of::<OPENFILENAMEW>() as u32;
 	open_file_name.lpstrTitle = PCWSTR(title.as_ptr());
-	if let Some(filter) = &filter {
-		open_file_name.lpstrFilter = PCWSTR(filter.as_ptr());
+	if let Some(filters) = &filters {
+		open_file_name.lpstrFilter = PCWSTR(filters.as_ptr());
 	}
 	open_file_name.hwndOwner = hwnd(p.owner).unwrap_or_default();
 	open_file_name.lpstrFile = PWSTR(file_buffer.as_mut_ptr());
@@ -41,15 +41,15 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 
 fn pick_files_impl(p: &FileDialog<'_>, allow_multiple_selects: bool) -> Option<Vec<PathBuf>> {
 	let title = utf16cs(p.title);
-	let filter = build_windows_filter(p.filter);
+	let filters = build_windows_filter(p.filters);
 	let path = utils::abspath(p.path);
 	let mut file_buffer = initial_file_buffer(path.as_deref());
 
 	let mut open_file_name = OPENFILENAMEW::default();
 	open_file_name.lStructSize = std::mem::size_of::<OPENFILENAMEW>() as u32;
 	open_file_name.lpstrTitle = PCWSTR(title.as_ptr());
-	if let Some(filter) = &filter {
-		open_file_name.lpstrFilter = PCWSTR(filter.as_ptr());
+	if let Some(filters) = &filters {
+		open_file_name.lpstrFilter = PCWSTR(filters.as_ptr());
 	}
 	open_file_name.hwndOwner = hwnd(p.owner).unwrap_or_default();
 	open_file_name.lpstrFile = PWSTR(file_buffer.as_mut_ptr());
@@ -83,19 +83,21 @@ fn initial_file_buffer(file: Option<&Path>) -> Vec<u16> {
 	buffer
 }
 
-fn build_windows_filter(filter: Option<&[FileFilter<'_>]>) -> Option<Vec<u16>> {
-	let filter = filter?;
-	if filter.is_empty() {
-		return None;
-	}
+fn build_windows_filter(filters: Option<&[FileFilter<'_>]>) -> Option<Vec<u16>> {
+	let filters = filters?;
 
 	let mut spec = String::new();
-	for entry in filter {
-		use std::fmt::Write as _;
-		_ = write!(spec, "{}\0{}\0", entry.desc, utils::PrintJoin { parts: entry.patterns, separator: ";" });
+	for filter in filters {
+		add_filter(&mut spec, filter);
 	}
-	spec.push_str("All Files\0*.*\0\0");
+	add_filter(&mut spec, &FileFilter::ALL_FILES);
+	spec.push('\0');
 	Some(spec.encode_utf16().collect())
+}
+
+fn add_filter(result: &mut String, filter: &FileFilter) {
+	use std::fmt::Write as _;
+	_ = write!(result, "{}\0{}\0", filter.name, utils::PrintJoin { parts: filter.patterns, separator: ";" });
 }
 
 fn wide_to_string_until_nul(input: &[u16]) -> Option<PathBuf> {

@@ -1,6 +1,5 @@
 use std::{env, path, process, str, sync};
 use std::ffi::OsStr;
-use std::fmt::Write;
 use std::os::unix::ffi::OsStrExt;
 
 use super::*;
@@ -147,20 +146,20 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<path::PathBuf> {
 	}
 }
 
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<path::PathBuf> {
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<path::PathBuf> {
 	match *BACKEND {
-		Backend::KDialog => kdialog::folder_dialog(p),
-		Backend::Zenity => zenity::folder_dialog(p),
+		Backend::KDialog => kdialog::choose_folder(p),
+		Backend::Zenity => zenity::choose_folder(p),
 		#[cfg(feature = "xdg-portal")]
-		Backend::XdgPortal => xdg_portal::folder_dialog(p),
+		Backend::XdgPortal => xdg_portal::choose_folder(p),
 		#[cfg(feature = "gtk3")]
-		Backend::Gtk3 => gtk3::folder_dialog(p),
+		Backend::Gtk3 => gtk3::choose_folder(p),
 		#[cfg(feature = "gtk4")]
-		Backend::Gtk4 => gtk4::folder_dialog(p),
+		Backend::Gtk4 => gtk4::choose_folder(p),
 	}
 }
 
-pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<path::PathBuf>> {
+pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<path::PathBuf>> {
 	match *BACKEND {
 		Backend::KDialog => kdialog::choose_folders(p),
 		Backend::Zenity => zenity::choose_folders(p),

@@ -3,15 +3,15 @@ use std::path::Path;
 fn main() {
 	let filters = [
 		rustydialogs::FileFilter {
-			desc: "Markdown Files (*.md)",
+			name: "Markdown Files",
 			patterns: &["*.md"],
 		},
 		rustydialogs::FileFilter {
-			desc: "Text Files (*.txt)",
+			name: "Text Files",
 			patterns: &["*.txt"],
 		},
 		rustydialogs::FileFilter {
-			desc: "JSON Files (*.json)",
+			name: "JSON Files",
 			patterns: &["*.json"],
 		},
 	];
@@ -19,7 +19,7 @@ fn main() {
 	let dialog = rustydialogs::FileDialog {
 		title: "Open file(s)",
 		path: Some(Path::new("readme.md")),
-		filter: Some(&filters),
+		filters: Some(&filters),
 		owner: None,
 	};
 

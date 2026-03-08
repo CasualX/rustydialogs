@@ -3,11 +3,11 @@ use std::path::Path;
 fn main() {
 	let filters = [
 		rustydialogs::FileFilter {
-			desc: "Text Files (*.txt)",
+			name: "Text Files",
 			patterns: &["*.txt"],
 		},
 		rustydialogs::FileFilter {
-			desc: "JSON Files (*.json)",
+			name: "JSON Files",
 			patterns: &["*.json"],
 		},
 	];
@@ -15,7 +15,7 @@ fn main() {
 	let dialog = rustydialogs::FileDialog {
 		title: "Save a file",
 		path: Some(Path::new("output.txt")),
-		filter: Some(&filters),
+		filters: Some(&filters),
 		owner: None,
 	};
 

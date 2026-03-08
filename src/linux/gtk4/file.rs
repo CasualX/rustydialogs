@@ -5,32 +5,71 @@ fn apply_file_chooser_defaults(dialog: *mut gtk4_sys::GtkFileChooser, p: &FileDi
 		gtk4_sys::gtk_file_chooser_set_select_multiple(dialog, multiple as i32);
 		let _ = save;
 
-		if let Some(path) = p.path {
-			let c_path = cstring(path.to_string_lossy().as_ref());
+		if let Some(filters) = p.filters {
+			for filter in filters {
+				add_filter(dialog, filter);
+			}
+			add_filter(dialog, &FileFilter::ALL_FILES);
+		}
+	}
+
+	if let Some(path) = utils::abspath(p.path) {
+		apply_initial_path(dialog, path.as_ref());
+	}
+}
+
+fn apply_initial_path(dialog: *mut gtk4_sys::GtkFileChooser, path: &Path) {
+	if path.is_dir() {
+		set_current_folder(dialog, path);
+		return;
+	}
+
+	if path.is_file() {
+		set_file(dialog, path);
+		return;
+	}
+
+	if let Some(parent) = path.parent().filter(|parent| parent.is_dir()) {
+		set_current_folder(dialog, parent);
+	}
+
+	if let Some(name) = path.file_name() {
+		if let Some(c_name) = os_cstring(name) {
+			unsafe { gtk4_sys::gtk_file_chooser_set_current_name(dialog, c_name.as_ptr()); }
+		}
+	}
+}
+
+fn set_current_folder(dialog: *mut gtk4_sys::GtkFileChooser, path: &Path) {
+	if let Some(c_path) = os_cstring(path.as_os_str()) {
+		unsafe {
+			let file = gtk4_gio_sys::g_file_new_for_path(c_path.as_ptr());
+			gtk4_sys::gtk_file_chooser_set_current_folder(dialog, file, ptr::null_mut());
+			g_object_unref(file as *mut _);
+		}
+	}
+}
+
+fn set_file(dialog: *mut gtk4_sys::GtkFileChooser, path: &Path) {
+	if let Some(c_path) = os_cstring(path.as_os_str()) {
+		unsafe {
 			let file = gtk4_gio_sys::g_file_new_for_path(c_path.as_ptr());
 			gtk4_sys::gtk_file_chooser_set_file(dialog, file, ptr::null_mut());
 			g_object_unref(file as *mut _);
 		}
+	}
+}
 
-		if let Some(filters) = p.filter {
-			for entry in filters {
-				let filter = gtk4_sys::gtk_file_filter_new();
-				let desc = cstring(entry.desc);
-				gtk4_sys::gtk_file_filter_set_name(filter, desc.as_ptr());
-				for pattern in entry.patterns {
-					let pattern = cstring(pattern);
-					gtk4_sys::gtk_file_filter_add_pattern(filter, pattern.as_ptr());
-				}
-				gtk4_sys::gtk_file_chooser_add_filter(dialog, filter);
-			}
+fn add_filter(dialog: *mut gtk4_sys::GtkFileChooser, filter: &FileFilter) {
+	unsafe {
+		let gtk_filter = gtk4_sys::gtk_file_filter_new();
+		let name = cstring(filter.name);
+		gtk4_sys::gtk_file_filter_set_name(gtk_filter, name.as_ptr());
+		for pattern in filter.patterns {
+			let pattern = cstring(pattern);
+			gtk4_sys::gtk_file_filter_add_pattern(gtk_filter, pattern.as_ptr());
 		}
-
-		let all_files_filter = gtk4_sys::gtk_file_filter_new();
-		let all_files_name = c"All Files";
-		let all_files_pattern = c"*";
-		gtk4_sys::gtk_file_filter_set_name(all_files_filter, all_files_name.as_ptr());
-		gtk4_sys::gtk_file_filter_add_pattern(all_files_filter, all_files_pattern.as_ptr());
-		gtk4_sys::gtk_file_chooser_add_filter(dialog, all_files_filter);
+		gtk4_sys::gtk_file_chooser_add_filter(dialog, gtk_filter);
 	}
 }
 

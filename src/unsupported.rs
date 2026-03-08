@@ -21,12 +21,12 @@ pub fn save_file(_p: &FileDialog<'_>) -> Option<PathBuf> {
 }
 
 #[inline]
-pub fn folder_dialog(_p: &FolderDialog<'_>) -> Option<PathBuf> {
+pub fn choose_folder(_p: &FileDialog<'_>) -> Option<PathBuf> {
 	None
 }
 
 #[inline]
-pub fn choose_folders(_p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+pub fn choose_folders(_p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	None
 }
 

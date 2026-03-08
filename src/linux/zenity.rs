@@ -97,7 +97,7 @@ fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 		args.push(os("\n"));
 	}
 
-	let filters = filter_strings(p.filter);
+	let filters = filter_strings(p.filters);
 	for filter in &filters {
 		args.push(os("--file-filter"));
 		args.push(os(filter));
@@ -129,7 +129,7 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 		args.push(file_path.as_os_str());
 	}
 
-	let filters = filter_strings(p.filter);
+	let filters = filter_strings(p.filters);
 	for filter in &filters {
 		args.push(os("--file-filter"));
 		args.push(os(filter));
@@ -146,16 +146,16 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 		.map(|line| PathBuf::from(OsStr::from_bytes(line)))
 }
 
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<PathBuf> {
 	choose_folders_impl(p, false).and_then(|paths| paths.into_iter().next())
 }
 
-pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	choose_folders_impl(p, true)
 }
 
-fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
-	let directory = p.directory.unwrap_or_else(|| Path::new("."));
+fn choose_folders_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
+	let directory = p.path.unwrap_or_else(|| Path::new("."));
 	let args = [
 		os("--file-selection"),
 		os("--directory"),
@@ -184,15 +184,19 @@ fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathB
 		.collect())
 }
 
-fn filter_strings(filter: Option<&[FileFilter<'_>]>) -> Vec<String> {
+fn filter_strings(filters: Option<&[FileFilter<'_>]>) -> Vec<String> {
 	let mut result = Vec::new();
-	if let Some(filter) = filter {
-		for entry in filter {
-			result.push(format!("{} | {}", entry.desc, utils::PrintJoin { parts: entry.patterns, separator: " " }));
+	if let Some(filters) = filters {
+		for filter in filters {
+			result.push(filter_string(filter));
 		}
+		result.push(filter_string(&FileFilter::ALL_FILES));
 	}
-	result.push(String::from("All Files (*) | *"));
 	result
+}
+
+fn filter_string(filter: &FileFilter) -> String {
+	format!("{} | {}", filter.name, utils::PrintJoin { parts: filter.patterns, separator: " " })
 }
 
 

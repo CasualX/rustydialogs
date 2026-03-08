@@ -9,7 +9,7 @@ use windows::Win32::UI::WindowsAndMessaging::SendMessageW;
 
 use super::*;
 
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<PathBuf> {
 	let title = utf16cs(p.title);
 
 	let mut display_name = [0u16; MAX_PATH as usize];
@@ -19,7 +19,7 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 	browse_info.lpszTitle = PCWSTR(title.as_ptr());
 	browse_info.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
 	browse_info.lpfn = Some(folder_browse_callback);
-	browse_info.lParam = LPARAM((p as *const FolderDialog<'_>).expose_provenance() as isize);
+	browse_info.lParam = LPARAM((p as *const FileDialog<'_>).expose_provenance() as isize);
 
 	let item_list = unsafe { SHBrowseForFolderW(&mut browse_info) };
 	if item_list.is_null() {
@@ -43,9 +43,9 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 }
 
 unsafe extern "system" fn folder_browse_callback(hwnd: HWND, message: u32, _lparam: LPARAM, data: LPARAM) -> i32 {
-	let p = unsafe { &*std::ptr::with_exposed_provenance::<FolderDialog<'_>>(data.0 as usize) };
+	let p = unsafe { &*std::ptr::with_exposed_provenance::<FileDialog<'_>>(data.0 as usize) };
 	if message == BFFM_INITIALIZED {
-		let directory = p.directory.map(|path| utf16cs(&path.to_string_lossy()));
+		let directory = p.path.map(|path| utf16cs(&path.to_string_lossy()));
 		let lparam = directory.as_ref().map(|dir| LPARAM(dir.as_ptr().expose_provenance() as isize));
 		let _ = SendMessageW(hwnd, BFFM_SETSELECTIONW, Some(WPARAM(1)), lparam);
 	}

@@ -1,14 +1,14 @@
 use super::*;
 
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<PathBuf> {
 	choose_folders_impl(p, false).and_then(|paths| paths.into_iter().next())
 }
 
-pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	choose_folders_impl(p, true)
 }
 
-fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
+fn choose_folders_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	ensure_gtk_initialized();
 
 	let title = cstring(p.title);
@@ -28,11 +28,12 @@ fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathB
 
 	unsafe {
 		gtk4_sys::gtk_file_chooser_set_select_multiple(chooser, multiple as i32);
-		if let Some(directory) = p.directory {
-			let c_path = cstring(directory.to_string_lossy().as_ref());
-			let file = gtk4_gio_sys::g_file_new_for_path(c_path.as_ptr());
-			gtk4_sys::gtk_file_chooser_set_current_folder(chooser, file, ptr::null_mut());
-			g_object_unref(file as *mut _);
+		if let Some(directory) = p.path {
+			if let Some(c_path) = os_cstring(directory.as_os_str()) {
+				let file = gtk4_gio_sys::g_file_new_for_path(c_path.as_ptr());
+				gtk4_sys::gtk_file_chooser_set_current_folder(chooser, file, ptr::null_mut());
+				g_object_unref(file as *mut _);
+			}
 		}
 	}
 

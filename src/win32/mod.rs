@@ -36,31 +36,31 @@ pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 }
 
 #[inline]
-pub fn pick_file(p: &FileDialog<'_>) -> Option<std::path::PathBuf> {
+pub fn pick_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	// ifiledialog::pick_file(p)
 	file::pick_file(p)
 }
 
 #[inline]
-pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<std::path::PathBuf>> {
+pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	// ifiledialog::pick_files(p)
 	file::pick_files(p)
 }
 
 #[inline]
-pub fn save_file(p: &FileDialog<'_>) -> Option<std::path::PathBuf> {
+pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	// ifiledialog::save_file(p)
 	file::save_file(p)
 }
 
 #[inline]
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<std::path::PathBuf> {
-	// ifiledialog::folder_dialog(p)
-	folder::folder_dialog(p)
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<PathBuf> {
+	// ifiledialog::choose_folder(p)
+	folder::choose_folder(p)
 }
 
 #[inline]
-pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<std::path::PathBuf>> {
+pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	ifiledialog::choose_folders(p)
 }
 

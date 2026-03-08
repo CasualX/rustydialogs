@@ -1,7 +1,7 @@
 # Copilot Instructions for rustydialogs
 
 ## Big picture
-- `src/lib.rs` is the API surface: plain data structs + enums (`MessageBox`, `FileDialog`, `FolderDialog`, `TextInput`, `ColorPicker`, `Notification`) with thin forwarding methods.
+- `src/lib.rs` is the API surface: plain data structs + enums (`MessageBox`, `FileDialog`, `TextInput`, `ColorPicker`, `Notification`) with thin forwarding methods.
 - Platform dispatch is compile-time + runtime:
   - Linux/BSD: `src/linux/mod.rs` chooses backend once via `LazyLock<Backend>`.
   - Windows: `src/win32/mod.rs` chooses notification backend on Cargo features.
@@ -13,7 +13,7 @@
   1. Public type/method in `src/lib.rs`
   2. Per-platform dispatcher (`src/linux/mod.rs`, `src/win32/mod.rs`, `src/macos/mod.rs`)
   3. Concrete backend modules (e.g. `src/linux/zenity.rs`, `src/win32/file.rs`, `src/macos/osascript.rs`)
-- Keep backend function names aligned (`message_box`, `pick_file`, `pick_files`, `save_file`, `folder_dialog`, `text_input`, `color_picker`, `notify`).
+- Keep backend function names aligned (`message_box`, `pick_file`, `pick_files`, `save_file`, `choose_folder`, `choose_folders`, `text_input`, `color_picker`, `notify`).
 - Preserve current style: tab indentation, concise helpers, no builder API.
 
 ## Backend-specific conventions

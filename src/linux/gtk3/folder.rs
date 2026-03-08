@@ -1,14 +1,14 @@
 use super::*;
 
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<PathBuf> {
 	choose_folders_impl(p, false).and_then(|paths| paths.into_iter().next())
 }
 
-pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	choose_folders_impl(p, true)
 }
 
-fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
+fn choose_folders_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	ensure_gtk_initialized();
 
 	let title = cstring(p.title);
@@ -28,9 +28,10 @@ fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathB
 
 	unsafe {
 		gtk_sys::gtk_file_chooser_set_select_multiple(chooser, multiple as i32);
-		if let Some(directory) = p.directory {
-			let c_path = cstring(directory.to_string_lossy().as_ref());
-			gtk_sys::gtk_file_chooser_set_current_folder(chooser, c_path.as_ptr());
+		if let Some(directory) = p.path {
+			if let Some(c_path) = os_cstring(directory.as_os_str()) {
+				gtk_sys::gtk_file_chooser_set_current_folder(chooser, c_path.as_ptr());
+			}
 		}
 	}
 

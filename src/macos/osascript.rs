@@ -155,8 +155,8 @@ end run
 	Some(PathBuf::from(path))
 }
 
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
-	let initial_directory = p.directory
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<PathBuf> {
+	let initial_directory = p.path
 		.and_then(|path| path.to_str())
 		.unwrap_or("");
 
@@ -182,8 +182,8 @@ end run
 	Some(PathBuf::from(path))
 }
 
-pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
-	let initial_directory = p.directory
+pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
+	let initial_directory = p.path
 		.and_then(|path| path.to_str())
 		.unwrap_or("");
 

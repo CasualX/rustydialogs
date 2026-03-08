@@ -53,13 +53,13 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 }
 
 fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
-	let filter_string = filter_string(p.filter);
+	let filters = filters_string(p.filters);
 	let file_path = utils::abspath(p.path);
 	let file_path = file_path.as_deref().map(Path::as_os_str).unwrap_or(os("."));
 
 	let args = [
 		os("--title"), os(p.title),
-		os("--getopenfilename"), file_path, os(&filter_string),
+		os("--getopenfilename"), file_path, os(&filters),
 		os("--multiple"),
 		os("--separate-output"),
 	];
@@ -78,13 +78,13 @@ fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 }
 
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
-	let filter_string = filter_string(p.filter);
+	let filters = filters_string(p.filters);
 	let file_path = utils::abspath(p.path);
 	let file_path = file_path.as_deref().map(Path::as_os_str).unwrap_or(os("."));
 
 	let args = [
 		os("--title"), os(p.title),
-		os("--getsavefilename"), file_path, os(&filter_string),
+		os("--getsavefilename"), file_path, os(&filters),
 	];
 
 	let (code, output) = invoke_output_bytes("kdialog", &args);
@@ -98,8 +98,8 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 		.map(|line| PathBuf::from(OsStr::from_bytes(line)))
 }
 
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
-	let directory = p.directory.unwrap_or_else(|| Path::new("."));
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<PathBuf> {
+	let directory = p.path.unwrap_or_else(|| Path::new("."));
 	let args = [
 		os("--title"), os(p.title),
 		os("--getexistingdirectory"), directory.as_os_str(),
@@ -116,20 +116,25 @@ pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
 		.map(|line| PathBuf::from(OsStr::from_bytes(line)))
 }
 
-pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	// KDialog does not support multiple folder selection
-	folder_dialog(p).map(|path| vec![path])
+	choose_folder(p).map(|path| vec![path])
 }
 
-fn filter_string(filter: Option<&[FileFilter<'_>]>) -> String {
+fn filters_string(filters: Option<&[FileFilter<'_>]>) -> String {
 	let mut result = String::new();
-	if let Some(filter) = filter {
-		for entry in filter {
-			_ = write!(result, "{} ({})\n", entry.desc, utils::PrintJoin { parts: entry.patterns, separator: " " });
+	if let Some(filters) = filters {
+		for filter in filters {
+			add_filter(&mut result, filter);
 		}
+		add_filter(&mut result, &FileFilter::ALL_FILES);
 	}
-	result.push_str("All Files (*)");
 	result
+}
+
+fn add_filter(result: &mut String, filter: &FileFilter) {
+	use std::fmt::Write as _;
+	_ = write!(result, "{} ({})\n", filter.name, utils::PrintJoin { parts: filter.patterns, separator: " " });
 }
 
 

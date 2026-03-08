@@ -7,30 +7,57 @@ fn apply_file_chooser_defaults(dialog: *mut gtk_sys::GtkFileChooser, p: &FileDia
 			gtk_sys::gtk_file_chooser_set_do_overwrite_confirmation(dialog, 1);
 		}
 
-		if let Some(path) = p.path {
-			let c_path = cstring(path.to_string_lossy().as_ref());
-			gtk_sys::gtk_file_chooser_set_filename(dialog, c_path.as_ptr());
-		}
-
-		if let Some(filters) = p.filter {
-			for entry in filters {
-				let filter = gtk_sys::gtk_file_filter_new();
-				let desc = cstring(entry.desc);
-				gtk_sys::gtk_file_filter_set_name(filter, desc.as_ptr());
-				for pattern in entry.patterns {
-					let pattern = cstring(pattern);
-					gtk_sys::gtk_file_filter_add_pattern(filter, pattern.as_ptr());
-				}
-				gtk_sys::gtk_file_chooser_add_filter(dialog, filter);
+		if let Some(filters) = p.filters {
+			for filter in filters {
+				add_filter(dialog, filter);
 			}
+			add_filter(dialog, &FileFilter::ALL_FILES);
 		}
+	}
 
-		let all_files_filter = gtk_sys::gtk_file_filter_new();
-		let all_files_name = c"All Files";
-		let all_files_pattern = c"*";
-		gtk_sys::gtk_file_filter_set_name(all_files_filter, all_files_name.as_ptr());
-		gtk_sys::gtk_file_filter_add_pattern(all_files_filter, all_files_pattern.as_ptr());
-		gtk_sys::gtk_file_chooser_add_filter(dialog, all_files_filter);
+	if let Some(path) = utils::abspath(p.path) {
+		apply_initial_path(dialog, path.as_ref());
+	}
+}
+
+fn apply_initial_path(dialog: *mut gtk_sys::GtkFileChooser, path: &Path) {
+	if path.is_dir() {
+		if let Some(c_path) = os_cstring(path.as_os_str()) {
+			unsafe { gtk_sys::gtk_file_chooser_set_current_folder(dialog, c_path.as_ptr()); }
+		}
+		return;
+	}
+
+	if path.is_file() {
+		if let Some(c_path) = os_cstring(path.as_os_str()) {
+			unsafe { gtk_sys::gtk_file_chooser_set_filename(dialog, c_path.as_ptr()); }
+		}
+		return;
+	}
+
+	if let Some(parent) = path.parent().filter(|parent| parent.is_dir()) {
+		if let Some(c_parent) = os_cstring(parent.as_os_str()) {
+			unsafe { gtk_sys::gtk_file_chooser_set_current_folder(dialog, c_parent.as_ptr()); }
+		}
+	}
+
+	if let Some(name) = path.file_name() {
+		if let Some(c_name) = os_cstring(name) {
+			unsafe { gtk_sys::gtk_file_chooser_set_current_name(dialog, c_name.as_ptr()); }
+		}
+	}
+}
+
+fn add_filter(dialog: *mut gtk_sys::GtkFileChooser, filter: &FileFilter) {
+	unsafe {
+		let gtk_filter = gtk_sys::gtk_file_filter_new();
+		let name = cstring(filter.name);
+		gtk_sys::gtk_file_filter_set_name(gtk_filter, name.as_ptr());
+		for pattern in filter.patterns {
+			let pattern = cstring(pattern);
+			gtk_sys::gtk_file_filter_add_pattern(gtk_filter, pattern.as_ptr());
+		}
+		gtk_sys::gtk_file_chooser_add_filter(dialog, gtk_filter);
 	}
 }
 

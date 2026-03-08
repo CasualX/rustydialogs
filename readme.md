@@ -54,7 +54,7 @@ Development
 To check the code on all supported platforms, run the following command:
 
 ```bash
-cargo check --examples
+cargo check --examples --all-features
 cargo check --examples --target=x86_64-pc-windows-gnu
 cargo check --examples --target=x86_64-unknown-linux-gnu
 cargo check --examples --target=aarch64-apple-darwin

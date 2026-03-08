@@ -188,13 +188,13 @@ fn test_save_file_dialog() {
 		|| rustydialogs::FileDialog {
 			title: "[tests] SaveFileDialog",
 			path: Some(&current_dir),
-			filter: Some(&[
+			filters: Some(&[
 				rustydialogs::FileFilter {
-					desc: "Markdown Files",
+					name: "Markdown Files",
 					patterns: &["*.md"],
 				},
 				rustydialogs::FileFilter {
-					desc: "Text Files",
+					name: "Text Files",
 					patterns: &["*.txt"],
 				},
 			]),
@@ -207,9 +207,9 @@ fn test_save_file_dialog() {
 		|| rustydialogs::FileDialog {
 			title: "[tests] Dismiss SaveFileDialog",
 			path: Some(&current_dir),
-			filter: Some(&[
+			filters: Some(&[
 				rustydialogs::FileFilter {
-					desc: "Text Files",
+					name: "Text Files",
 					patterns: &["*.txt"],
 				},
 			]),
@@ -228,9 +228,9 @@ fn test_open_file_dialog() {
 		|| rustydialogs::FileDialog {
 			title: "[tests] OpenFileDialog",
 			path: Some(&current_dir),
-			filter: Some(&[
+			filters: Some(&[
 				rustydialogs::FileFilter {
-					desc: "TOML Files",
+					name: "TOML Files",
 					patterns: &["*.toml"],
 				},
 			]),
@@ -246,7 +246,7 @@ fn test_open_file_dialog() {
 		|| rustydialogs::FileDialog {
 			title: "[tests] OpenFileDialog (multiple)",
 			path: Some(&current_dir),
-			filter: None,
+			filters: None,
 			owner: None,
 		}.pick_files().map(sorted)
 	);
@@ -256,9 +256,9 @@ fn test_open_file_dialog() {
 		|| rustydialogs::FileDialog {
 			title: "[tests] Dismiss OpenFileDialog",
 			path: Some(&current_dir),
-			filter: Some(&[
+			filters: Some(&[
 				rustydialogs::FileFilter {
-					desc: "TOML Files",
+					name: "TOML Files",
 					patterns: &["*.toml"],
 				},
 			]),
@@ -274,11 +274,12 @@ fn test_folder_dialog() {
 
 	step("Select the `src` folder and press Open.",
 		Some(current_dir.join("src")),
-		|| rustydialogs::FolderDialog {
-			title: "[tests] FolderDialog",
-			directory: Some(&current_dir),
+		|| rustydialogs::FileDialog {
+			title: "[tests] FileDialog choose_folder",
+			path: Some(&current_dir),
+			filters: None,
 			owner: None,
-		}.show()
+		}.choose_folder()
 	);
 
 	step("Select multiple folders (`src` and `examples`) and press Open.",
@@ -286,20 +287,22 @@ fn test_folder_dialog() {
 			current_dir.join("examples"),
 			current_dir.join("src"),
 		]),
-		|| rustydialogs::FolderDialog {
-			title: "[tests] FolderDialog (multiple)",
-			directory: Some(&current_dir),
+		|| rustydialogs::FileDialog {
+			title: "[tests] FileDialog choose_folders",
+			path: Some(&current_dir),
+			filters: None,
 			owner: None,
 		}.choose_folders().map(sorted)
 	);
 
 	step("Dismiss the dialog.",
 		None,
-		|| rustydialogs::FolderDialog {
-			title: "[tests] Dismiss FolderDialog",
-			directory: Some(&current_dir),
+		|| rustydialogs::FileDialog {
+			title: "[tests] Dismiss FileDialog choose_folder",
+			path: Some(&current_dir),
+			filters: None,
 			owner: None,
-		}.show()
+		}.choose_folder()
 	);
 }
 

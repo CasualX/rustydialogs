@@ -29,11 +29,11 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	file::save_file(p)
 }
 
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
-	folder::folder_dialog(p)
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<PathBuf> {
+	folder::choose_folder(p)
 }
 
-pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	folder::choose_folders(p)
 }
 
@@ -56,6 +56,10 @@ fn ensure_gtk_initialized() {
 
 fn cstring(value: &str) -> CString {
 	CString::new(value).unwrap_or_else(|_| CString::new(value.replace('\0', " ")).unwrap())
+}
+
+fn os_cstring(value: &OsStr) -> Option<CString> {
+	CString::new(value.as_bytes()).ok()
 }
 
 fn c_to_path_buf(ptr: *mut c_char) -> Option<PathBuf> {

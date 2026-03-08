@@ -110,17 +110,17 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	})
 }
 
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<PathBuf> {
 	choose_folders_impl(p, false).and_then(|paths| paths.into_iter().next())
 }
 
-pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	choose_folders_impl(p, true)
 }
 
-fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
+fn choose_folders_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	let title_text = p.title;
-	let directory = p.directory;
+	let directory = p.path;
 
 	run_on_main(move |mtm| {
 		let panel = NSOpenPanel::openPanel(mtm);

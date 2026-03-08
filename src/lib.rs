@@ -117,14 +117,22 @@ impl<'a> MessageBox<'a> {
 #[derive(Copy, Clone, Debug)]
 pub struct FileFilter<'a> {
 	/// The description of the file filter, e.g. `"Text Files"`.
-	pub desc: &'a str,
+	pub name: &'a str,
 	/// The file patterns of the file filter, e.g. `&["*.txt"]` or `&["*.jpg", "*.jpeg"]`.
 	pub patterns: &'a [&'a str],
 }
 
+#[allow(dead_code)]
+impl FileFilter<'_> {
+	const ALL_FILES: FileFilter<'static> = FileFilter {
+		name: "All Files",
+		patterns: &["*"],
+	};
+}
+
 /// File dialog.
 ///
-/// The file dialog allows the user to select a file or multiple files, or to specify a file name for saving.
+/// The file dialog allows the user to select a file or multiple files, specify a file name for saving, or select folders.
 ///
 /// ```no_run
 /// use std::env;
@@ -132,9 +140,9 @@ pub struct FileFilter<'a> {
 /// let file = rustydialogs::FileDialog {
 /// 	title: "Open File",
 /// 	path: env::current_dir().ok().as_deref(),
-/// 	filter: Some(&[
+/// 	filters: Some(&[
 /// 		rustydialogs::FileFilter {
-/// 			desc: "Text Files",
+/// 			name: "Text Files",
 /// 			patterns: &["*.txt", "*.md"],
 /// 		},
 /// 	]),
@@ -158,7 +166,9 @@ pub struct FileDialog<'a> {
 	/// Otherwise, [`Path::file_name`] is used as the default file name.
 	pub path: Option<&'a Path>,
 	/// An optional list of file filters to show in the file dialog.
-	pub filter: Option<&'a [FileFilter<'a>]>,
+	///
+	/// An additional "All Files" filter is automatically added to the end of the list.
+	pub filters: Option<&'a [FileFilter<'a>]>,
 	/// The owner window of the dialog.
 	pub owner: Option<&'a dyn HasWindowHandle>,
 }
@@ -181,43 +191,18 @@ impl<'a> FileDialog<'a> {
 	pub fn save_file(&self) -> Option<PathBuf> {
 		save_file(self)
 	}
-}
 
-/// Folder dialog.
-///
-/// The folder dialog allows the user to select a folder or directory.
-///
-/// ```no_run
-/// use std::env;
-///
-/// let folder = rustydialogs::FolderDialog {
-/// 	title: "Select Folder",
-/// 	directory: env::current_dir().ok().as_deref(),
-/// 	owner: None,
-/// }.show();
-///
-/// if let Some(path) = folder {
-/// 	println!("Picked folder: {}", path.display());
-/// }
-/// ```
-#[derive(Copy, Clone)]
-pub struct FolderDialog<'a> {
-	/// The title of the dialog.
-	pub title: &'a str,
-	/// The initial directory to show in the folder dialog.
-	pub directory: Option<&'a Path>,
-	/// The owner window of the dialog.
-	pub owner: Option<&'a dyn HasWindowHandle>,
-}
-
-impl<'a> FolderDialog<'a> {
-	/// Show the dialog.
+	/// Show folder picker dialog, allowing the user to select a single folder.
+	///
+	/// The `filters` field is ignored for folder selection.
 	#[inline]
-	pub fn show(&self) -> Option<std::path::PathBuf> {
-		folder_dialog(self)
+	pub fn choose_folder(&self) -> Option<PathBuf> {
+		choose_folder(self)
 	}
 
-	/// Show the dialog, allowing the user to select multiple folders.
+	/// Show folder picker dialog, allowing the user to select multiple folders.
+	///
+	/// The `filters` field is ignored for folder selection.
 	///
 	/// ### Platform-specific behavior
 	///
@@ -225,7 +210,7 @@ impl<'a> FolderDialog<'a> {
 	///
 	/// - Linux: `kdialog`.
 	#[inline]
-	pub fn choose_folders(&self) -> Option<Vec<std::path::PathBuf>> {
+	pub fn choose_folders(&self) -> Option<Vec<PathBuf>> {
 		choose_folders(self)
 	}
 }

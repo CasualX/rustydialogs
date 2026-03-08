@@ -12,62 +12,62 @@ use windows::Win32::UI::Shell::Common::COMDLG_FILTERSPEC;
 
 use super::*;
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub fn pick_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	let _com = com::Apartment::init().ok()?;
 	let file_open_dialog: IFileOpenDialog = unsafe {
 		CoCreateInstance(&FileOpenDialog, None, CLSCTX_INPROC_SERVER).ok()?
 	};
 	let file_dialog: IFileDialog = file_open_dialog.cast().ok()?;
-	show_dialog(&file_dialog, p.title, p.path, p.filter, p.owner, FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST)?;
+	show_dialog(&file_dialog, p.title, p.path, p.filters, p.owner, FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST)?;
 	let item = unsafe { file_open_dialog.GetResult() }.ok()?;
 	path_from_shell_item(&item)
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	let _com = com::Apartment::init().ok()?;
 	let file_open_dialog: IFileOpenDialog = unsafe {
 		CoCreateInstance(&FileOpenDialog, None, CLSCTX_INPROC_SERVER).ok()?
 	};
 	let file_dialog: IFileDialog = file_open_dialog.cast().ok()?;
-	show_dialog(&file_dialog, p.title, p.path, p.filter, p.owner, FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST | FOS_ALLOWMULTISELECT)?;
+	show_dialog(&file_dialog, p.title, p.path, p.filters, p.owner, FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST | FOS_ALLOWMULTISELECT)?;
 	let items = unsafe { file_open_dialog.GetResults() }.ok()?;
 	let paths = paths_from_shell_item_array(&items);
 	if paths.is_empty() { None } else { Some(paths) }
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	let _com = com::Apartment::init().ok()?;
 	let file_save_dialog: IFileSaveDialog = unsafe {
 		CoCreateInstance(&FileSaveDialog, None, CLSCTX_INPROC_SERVER).ok()?
 	};
 	let file_dialog: IFileDialog = file_save_dialog.cast().ok()?;
-	show_dialog(&file_dialog, p.title, p.path, p.filter, p.owner, FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST | FOS_OVERWRITEPROMPT)?;
+	show_dialog(&file_dialog, p.title, p.path, p.filters, p.owner, FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST | FOS_OVERWRITEPROMPT)?;
 	let item = unsafe { file_save_dialog.GetResult() }.ok()?;
 	path_from_shell_item(&item)
 }
 
-#[allow(dead_code)]
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+#[expect(dead_code)]
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<PathBuf> {
 	let _com = com::Apartment::init().ok()?;
 	let file_open_dialog: IFileOpenDialog = unsafe {
 		CoCreateInstance(&FileOpenDialog, None, CLSCTX_INPROC_SERVER).ok()?
 	};
 	let file_dialog: IFileDialog = file_open_dialog.cast().ok()?;
-	show_dialog(&file_dialog, p.title, p.directory, None, p.owner, FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST)?;
+	show_dialog(&file_dialog, p.title, p.path, None, p.owner, FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST)?;
 	let item = unsafe { file_open_dialog.GetResult() }.ok()?;
 	path_from_shell_item(&item)
 }
 
-pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	let _com = com::Apartment::init().ok()?;
 	let file_open_dialog: IFileOpenDialog = unsafe {
 		CoCreateInstance(&FileOpenDialog, None, CLSCTX_INPROC_SERVER).ok()?
 	};
 	let file_dialog: IFileDialog = file_open_dialog.cast().ok()?;
-	show_dialog(&file_dialog, p.title, p.directory, None, p.owner, FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST | FOS_ALLOWMULTISELECT)?;
+	show_dialog(&file_dialog, p.title, p.path, None, p.owner, FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST | FOS_ALLOWMULTISELECT)?;
 	let items = unsafe { file_open_dialog.GetResults() }.ok()?;
 	let paths = paths_from_shell_item_array(&items);
 	if paths.is_empty() { None } else { Some(paths) }
@@ -167,12 +167,12 @@ struct DialogFilters {
 	specs: Vec<COMDLG_FILTERSPEC>,
 }
 
-fn build_windows_filter(filter: &[FileFilter<'_>]) -> DialogFilters {
-	let mut names = Vec::with_capacity(filter.len() + 1);
-	let mut specs_storage = Vec::with_capacity(filter.len() + 1);
+fn build_windows_filter(filters: &[FileFilter<'_>]) -> DialogFilters {
+	let mut names = Vec::with_capacity(filters.len() + 1);
+	let mut specs_storage = Vec::with_capacity(filters.len() + 1);
 
-	for entry in filter {
-		names.push(utf16cs(entry.desc));
+	for entry in filters {
+		names.push(utf16cs(entry.name));
 		specs_storage.push(utf16cs(&utils::PrintJoin {
 			parts: entry.patterns,
 			separator: ";",

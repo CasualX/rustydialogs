@@ -77,22 +77,22 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	uris.into_iter().find_map(|uri| parse_file_uri(&uri))
 }
 
-pub fn folder_dialog(p: &FolderDialog<'_>) -> Option<PathBuf> {
+pub fn choose_folder(p: &FileDialog<'_>) -> Option<PathBuf> {
 	choose_folders_impl(p, false).and_then(|paths| paths.into_iter().next())
 }
 
-pub fn choose_folders(p: &FolderDialog<'_>) -> Option<Vec<PathBuf>> {
+pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 	choose_folders_impl(p, true)
 }
 
-fn choose_folders_impl(p: &FolderDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
+fn choose_folders_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	let conn = Connection::new_session().ok()?;
 	let proxy = conn.with_proxy(DESKTOP_BUS_NAME, DESKTOP_PATH, time::Duration::from_secs(30));
 
 	let mut options: PropMap = PropMap::new();
 	options.insert(String::from("directory"), Variant(Box::new(true)));
 	options.insert(String::from("multiple"), Variant(Box::new(multiple)));
-	if let Some(directory) = p.directory {
+	if let Some(directory) = p.path {
 		if let Some(folder) = portal_directory_bytes(directory) {
 			options.insert(String::from("current_folder"), Variant(Box::new(folder)));
 		}
@@ -131,33 +131,33 @@ fn portal_file_options(p: &FileDialog<'_>) -> PropMap {
 			}
 		}
 	}
-	let filters = portal_filters(p.filter);
-	if !filters.is_empty() {
-		options.insert(String::from("filters"), Variant(Box::new(filters.clone())));
-		options.insert(String::from("current_filter"), Variant(Box::new(filters[0].clone())));
+	if let Some(filters) = p.filters {
+		let filters = portal_filters(filters);
+		if let Some(current_filter) = filters.first() {
+			options.insert(String::from("current_filter"), Variant(Box::new(current_filter.clone())));
+		}
+		options.insert(String::from("filters"), Variant(Box::new(filters)));
 	}
 	options
 }
 
 type PortalFilter = (String, Vec<(u32, String)>);
 
-fn portal_filters(filters: Option<&[FileFilter<'_>]>) -> Vec<PortalFilter> {
-	let mut out = filters
-		.unwrap_or(&[])
-		.iter()
-		.map(|entry| {
-			let patterns = entry
-				.patterns
-				.iter()
-				.map(|pattern| (0u32, (*pattern).to_string()))
-				.collect::<Vec<_>>();
-			(entry.desc.to_string(), patterns)
-		})
-		.filter(|(_, patterns)| !patterns.is_empty())
+fn portal_filters(filters: &[FileFilter<'_>]) -> Vec<PortalFilter> {
+	let mut result = Vec::with_capacity(filters.len() + 1);
+	for filter in filters {
+		result.push(portal_filter(filter));
+	}
+	result.push(portal_filter(&FileFilter::ALL_FILES));
+	result
+}
+
+fn portal_filter(filter: &FileFilter) -> PortalFilter {
+	let patterns = filter.patterns.iter()
+		.map(|&pattern| (0u32, pattern.to_string()))
 		.collect::<Vec<_>>();
 
-	out.push((String::from("All Files (*)"), vec![(0u32, String::from("*"))]));
-	out
+	(filter.name.to_string(), patterns)
 }
 
 fn portal_directory_bytes(path: &Path) -> Option<Vec<u8>> {
