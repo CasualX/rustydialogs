@@ -1,37 +1,169 @@
-use dispatch2::run_on_main;
-use objc2::MainThreadOnly;
-use objc2::rc::Retained;
-use objc2_app_kit::{
-	NSAlert,
-	NSAlertFirstButtonReturn,
-	NSColor,
-	NSColorSpace,
-	NSColorWell,
-	NSColorWellStyle,
-	NSAlertSecondButtonReturn,
-	NSAlertStyle,
-	NSAlertThirdButtonReturn,
-	NSModalResponseOK,
-	NSOpenPanel,
-	NSScrollView,
-	NSSavePanel,
-	NSSecureTextField,
-	NSTextField,
-	NSTextView,
-	NSView,
-};
+use block2::StackBlock;
+use objc2::*;
+use objc2_app_kit::*;
 #[allow(deprecated)] // NSUserNotification is deprecated
-use objc2_foundation::{NSPoint, NSRect, NSSize, NSString, NSURL, NSUserNotification, NSUserNotificationCenter};
+use objc2_foundation::*;
+use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
 use super::*;
+
+fn run_on_main<R: Send, F: FnOnce(MainThreadMarker) -> R + Send>(run: F) -> R {
+	if let Some(mtm) = MainThreadMarker::new() {
+		run(mtm)
+	}
+	else {
+		let mtm = unsafe { MainThreadMarker::new_unchecked() };
+		let app = NSApplication::sharedApplication(mtm);
+		if app.isRunning() {
+			dispatch2::run_on_main(run)
+		}
+		else {
+			panic!("cannot show AppKit dialogs from a non-main thread before NSApplication is running");
+		}
+	}
+}
+
+struct PolicyManager {
+	app: rc::Retained<NSApplication>,
+	initial_policy: NSApplicationActivationPolicy,
+}
+
+impl PolicyManager {
+	fn new(mtm: MainThreadMarker) -> PolicyManager {
+		let app = NSApplication::sharedApplication(mtm);
+		let initial_policy = app.activationPolicy();
+
+		if initial_policy == NSApplicationActivationPolicy::Prohibited {
+			app.setActivationPolicy(NSApplicationActivationPolicy::Accessory);
+		}
+
+		PolicyManager { app, initial_policy }
+	}
+}
+
+impl Drop for PolicyManager {
+	fn drop(&mut self) {
+		self.app.setActivationPolicy(self.initial_policy);
+	}
+}
+
+struct FocusManager {
+	key_window: Option<rc::Retained<NSWindow>>,
+}
+
+impl FocusManager {
+	fn new(mtm: MainThreadMarker) -> FocusManager {
+		let app = NSApplication::sharedApplication(mtm);
+		let key_window = app.keyWindow();
+		FocusManager { key_window }
+	}
+}
+
+impl Drop for FocusManager {
+	fn drop(&mut self) {
+		if let Some(window) = &self.key_window {
+			window.makeKeyAndOrderFront(None);
+		}
+	}
+}
+
+fn owner_handle(owner: Option<&dyn HasWindowHandle>) -> Option<usize> {
+	let raw = owner.and_then(|window| window.window_handle().ok()).map(|handle| handle.as_raw());
+	match raw {
+		Some(RawWindowHandle::AppKit(handle)) => Some(handle.ns_view.as_ptr() as usize),
+		_ => None,
+	}
+}
+
+fn window_from_view_ptr(view: usize) -> Option<rc::Retained<NSWindow>> {
+	let view = view as *mut NSView;
+	let view = unsafe { rc::Retained::retain(view) }?;
+	view.window()
+}
+
+fn owner_window(owner: Option<usize>) -> Option<rc::Retained<NSWindow>> {
+	owner.and_then(window_from_view_ptr)
+}
+
+fn begin_alert_sheet(alert: &NSAlert, owner: Option<&NSWindow>, mtm: MainThreadMarker) {
+	if let Some(owner) = owner {
+		let completion = StackBlock::new(move |response| {
+			NSApplication::sharedApplication(mtm).stopModalWithCode(response);
+		});
+		alert.beginSheetModalForWindow_completionHandler(owner, Some(&*completion));
+	}
+}
+
+fn begin_panel_sheet(panel: &NSSavePanel, owner: Option<&NSWindow>) {
+	if let Some(owner) = owner {
+		let completion = StackBlock::new(|_: isize| {});
+		panel.beginSheetModalForWindow_completionHandler(owner, &*completion);
+	}
+}
+
+fn apply_filters(panel: &NSSavePanel, filters: Option<&[FileFilter<'_>]>) {
+	let Some(file_types) = filter_types(filters) else {
+		return;
+	};
+
+	let file_types = file_types.iter().map(|value| NSString::from_str(value)).collect::<Vec<_>>();
+	let array = NSArray::from_retained_slice(&file_types);
+
+	#[allow(deprecated)]
+	panel.setAllowedFileTypes(Some(&array));
+}
+
+fn filter_types(filters: Option<&[FileFilter<'_>]>) -> Option<Vec<String>> {
+	let filters = filters?;
+	let mut result = Vec::new();
+
+	for filter in filters {
+		for pattern in filter.patterns {
+			let Some(file_type) = pattern_to_file_type(pattern) else {
+				return None;
+			};
+			if !result.iter().any(|item| item == &file_type) {
+				result.push(file_type);
+			}
+		}
+	}
+
+	if result.is_empty() { None } else { Some(result) }
+}
+
+fn pattern_to_file_type(pattern: &str) -> Option<String> {
+	let pattern = pattern.trim();
+	if pattern.is_empty() || pattern == "*" || pattern == "*.*" {
+		return None;
+	}
+
+	let file_type = pattern.strip_prefix("*.")
+		.or_else(|| pattern.strip_prefix('.'))
+		.unwrap_or(pattern);
+
+	if file_type.is_empty()
+		|| file_type.contains('*')
+		|| file_type.contains('?')
+		|| file_type.contains('/')
+		|| file_type.contains('\\')
+	{
+		return None;
+	}
+
+	Some(file_type.to_string())
+}
 
 pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 	let title_text = p.title;
 	let message_text = p.message;
 	let icon = p.icon;
 	let buttons = p.buttons;
+	let owner = owner_handle(p.owner);
 
 	run_on_main(move |mtm| {
+		let _policy_manager = PolicyManager::new(mtm);
+		let _focus_manager = FocusManager::new(mtm);
+		let owner = owner_window(owner);
 		let alert = NSAlert::new(mtm);
 		let title = NSString::from_str(title_text);
 		let message = NSString::from_str(message_text);
@@ -54,6 +186,7 @@ pub fn message_box(p: &MessageBox<'_>) -> Option<MessageResult> {
 			alert.addButtonWithTitle(&NSString::from_str(label));
 		}
 
+		begin_alert_sheet(&alert, owner.as_deref(), mtm);
 		let response = alert.runModal();
 
 		let results: &[MessageResult] = match buttons {
@@ -83,12 +216,18 @@ pub fn pick_files(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 	let title = p.title;
 	let path = p.path;
+	let filters = p.filters;
+	let owner = owner_handle(p.owner);
 
 	run_on_main(move |mtm| {
+		let _policy_manager = PolicyManager::new(mtm);
+		let _focus_manager = FocusManager::new(mtm);
+		let owner = owner_window(owner);
 		let panel = NSSavePanel::savePanel(mtm);
 		let title = NSString::from_str(title);
 		panel.setTitle(Some(&title));
 		panel.setCanCreateDirectories(true);
+		apply_filters(&panel, filters);
 
 		let (directory, default_name) = initial_directory_and_name(path);
 		if let Some(directory) = directory {
@@ -101,6 +240,7 @@ pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
 			panel.setNameFieldStringValue(&name);
 		}
 
+		begin_panel_sheet(&panel, owner.as_deref());
 		let response = panel.runModal();
 		if response != NSModalResponseOK {
 			return None;
@@ -121,8 +261,12 @@ pub fn choose_folders(p: &FileDialog<'_>) -> Option<Vec<PathBuf>> {
 fn choose_folders_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	let title_text = p.title;
 	let directory = p.path;
+	let owner = owner_handle(p.owner);
 
 	run_on_main(move |mtm| {
+		let _policy_manager = PolicyManager::new(mtm);
+		let _focus_manager = FocusManager::new(mtm);
+		let owner = owner_window(owner);
 		let panel = NSOpenPanel::openPanel(mtm);
 		let title = NSString::from_str(title_text);
 		panel.setTitle(Some(&title));
@@ -138,6 +282,7 @@ fn choose_folders_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf
 			}
 		}
 
+		begin_panel_sheet(&panel, owner.as_deref());
 		let response = panel.runModal();
 		if response != NSModalResponseOK {
 			return None;
@@ -158,8 +303,12 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 	let message_text = p.message;
 	let value_text = p.value;
 	let mode = p.mode;
+	let owner = owner_handle(p.owner);
 
 	run_on_main(move |mtm| {
+		let _policy_manager = PolicyManager::new(mtm);
+		let _focus_manager = FocusManager::new(mtm);
+		let owner = owner_window(owner);
 		let alert = NSAlert::new(mtm);
 		let title = NSString::from_str(title_text);
 		let message = NSString::from_str(message_text);
@@ -179,6 +328,7 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 				field.setStringValue(&value);
 				alert.setAccessoryView(Some(&field));
 
+				begin_alert_sheet(&alert, owner.as_deref(), mtm);
 				let response = alert.runModal();
 				if response != NSAlertFirstButtonReturn { None }
 				else { Some(field.stringValue().to_string()) }
@@ -198,6 +348,7 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 				scroll.setDocumentView(Some(&field));
 				alert.setAccessoryView(Some(&scroll));
 
+				begin_alert_sheet(&alert, owner.as_deref(), mtm);
 				let response = alert.runModal();
 				if response != NSAlertFirstButtonReturn { None }
 				else { Some(field.string().to_string()) }
@@ -209,6 +360,7 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 				field.setStringValue(&value);
 				alert.setAccessoryView(Some(&field));
 
+				begin_alert_sheet(&alert, owner.as_deref(), mtm);
 				let response = alert.runModal();
 				if response != NSAlertFirstButtonReturn { None }
 				else { Some(field.stringValue().to_string()) }
@@ -220,8 +372,12 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 	let title_text = p.title;
 	let initial = p.value;
+	let owner = owner_handle(p.owner);
 
-	run_on_main(|mtm| {
+	run_on_main(move |mtm| {
+		let _policy_manager = PolicyManager::new(mtm);
+		let _focus_manager = FocusManager::new(mtm);
+		let owner = owner_window(owner);
 		let alert = NSAlert::new(mtm);
 		let title = NSString::from_str(title_text);
 		let ok = NSString::from_str("OK");
@@ -239,6 +395,7 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 		container.addSubview(&well);
 		alert.setAccessoryView(Some(&container));
 
+		begin_alert_sheet(&alert, owner.as_deref(), mtm);
 		let response = alert.runModal();
 		if response != NSAlertFirstButtonReturn {
 			return None;
@@ -282,8 +439,13 @@ pub fn notify(p: &Notification<'_>) {
 fn run_open_panel(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	let title_text = p.title;
 	let initial_path = p.path;
+	let filters = p.filters;
+	let owner = owner_handle(p.owner);
 
 	run_on_main(move |mtm| {
+		let _policy_manager = PolicyManager::new(mtm);
+		let _focus_manager = FocusManager::new(mtm);
+		let owner = owner_window(owner);
 		let panel = NSOpenPanel::openPanel(mtm);
 		let title = NSString::from_str(title_text);
 		panel.setTitle(Some(&title));
@@ -291,6 +453,7 @@ fn run_open_panel(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 		panel.setCanChooseFiles(true);
 		panel.setAllowsMultipleSelection(multiple);
 		panel.setCanCreateDirectories(true);
+		apply_filters(&panel, filters);
 
 		if let Some(initial_path) = initial_path {
 			let directory = initial_directory(Some(initial_path));
@@ -300,6 +463,7 @@ fn run_open_panel(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 			}
 		}
 
+		begin_panel_sheet(&panel, owner.as_deref());
 		let response = panel.runModal();
 		if response != NSModalResponseOK {
 			return None;
@@ -315,7 +479,7 @@ fn run_open_panel(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 	})
 }
 
-fn path_to_file_url(path: &Path) -> Retained<NSURL> {
+fn path_to_file_url(path: &Path) -> rc::Retained<NSURL> {
 	let path = NSString::from_str(&path.to_string_lossy());
 	NSURL::fileURLWithPath(&path)
 }
@@ -332,7 +496,7 @@ fn color_well_frame() -> NSRect {
 	NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(120.0, 28.0))
 }
 
-fn color_value_to_nscolor(color: ColorValue) -> Retained<NSColor> {
+fn color_value_to_nscolor(color: ColorValue) -> rc::Retained<NSColor> {
 	NSColor::colorWithSRGBRed_green_blue_alpha(
 		u8_to_component(color.red),
 		u8_to_component(color.green),
@@ -360,7 +524,7 @@ fn component_to_u8(value: f64) -> u8 {
 	(value.clamp(0.0, 1.0) * 255.0).round() as u8
 }
 
-fn url_into_pathbuf(url: Retained<NSURL>) -> Option<PathBuf> {
+fn url_into_pathbuf(url: rc::Retained<NSURL>) -> Option<PathBuf> {
 	let path = url.path()?;
 	Some(PathBuf::from(path.to_string()))
 }

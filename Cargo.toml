@@ -42,6 +42,7 @@ gtk4 = [
 	"libnotify",
 ]
 appkit = [
+	"dep:block2",
 	"dep:objc2",
 	"dep:objc2-foundation",
 	"dep:objc2-app-kit",
@@ -50,6 +51,9 @@ appkit = [
 
 [dependencies]
 raw-window-handle = "0.6"
+
+[dev-dependencies]
+winit = "0.30"
 
 [target.'cfg(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly", target_os = "netbsd", target_os = "openbsd"))'.dependencies]
 dbus = { version = "0.9", optional = true }
@@ -86,6 +90,7 @@ windows.features = [
 ]
 
 [target.'cfg(target_os = "macos")'.dependencies]
+block2 = { version = "0.6.2", optional = true }
 objc2 = { version = "0.6.4", optional = true }
 objc2-foundation = { version = "0.3.2", optional = true }
 objc2-app-kit = { version = "0.3.2", optional = true }

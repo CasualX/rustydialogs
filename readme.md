@@ -42,7 +42,7 @@ Extensively tested on Linux Ubuntu 24 LTS.
 
 ### macOS
 
-Untested on macOS. No testreport yet.
+Untested on macOS. No test report yet.
 
 - By default, AppleScript-based dialogs are used.
 
