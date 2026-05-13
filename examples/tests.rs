@@ -13,39 +13,73 @@ enum TestSelector {
 	Notification,
 }
 
+struct Config {
+	selector: TestSelector,
+	retry_on_fail: bool,
+}
+
+struct Runner {
+	retry_on_fail: bool,
+	failures: usize,
+}
+
 fn main() {
 	print_environment();
 
-	let args: Vec<_> = env::args().skip(1).collect();
-	let args = args.iter().map(|s| s.as_str()).collect::<Vec<_>>();
-
-	let selector = if args.len() != 1 {
-		prompt_selector()
-	}
-	else if let Some(selector) = parse_selector(args[0]) {
-		selector
-	}
-	else {
-		prompt_selector()
+	let config = parse_config(env::args().skip(1).collect());
+	let mut runner = Runner {
+		retry_on_fail: config.retry_on_fail,
+		failures: 0,
 	};
 
-	match selector {
+	match config.selector {
 		TestSelector::AllTests => {
-			test_message_box();
-			test_save_file_dialog();
-			test_open_file_dialog();
-			test_folder_dialog();
-			test_color_picker();
-			test_text_input();
-			test_notification();
+			runner.test_message_box();
+			runner.test_save_file_dialog();
+			runner.test_open_file_dialog();
+			runner.test_folder_dialog();
+			runner.test_color_picker();
+			runner.test_text_input();
+			runner.test_notification();
 		}
-		TestSelector::MessageBox => test_message_box(),
-		TestSelector::SaveFileDialog => test_save_file_dialog(),
-		TestSelector::OpenFileDialog => test_open_file_dialog(),
-		TestSelector::FolderDialog => test_folder_dialog(),
-		TestSelector::ColorPicker => test_color_picker(),
-		TestSelector::TextInput => test_text_input(),
-		TestSelector::Notification => test_notification(),
+		TestSelector::MessageBox => runner.test_message_box(),
+		TestSelector::SaveFileDialog => runner.test_save_file_dialog(),
+		TestSelector::OpenFileDialog => runner.test_open_file_dialog(),
+		TestSelector::FolderDialog => runner.test_folder_dialog(),
+		TestSelector::ColorPicker => runner.test_color_picker(),
+		TestSelector::TextInput => runner.test_text_input(),
+		TestSelector::Notification => runner.test_notification(),
+	}
+
+	if runner.failures == 0 {
+		println!("\n{}", Color("All requested steps passed.", "123;201;111"));
+	}
+	else {
+		eprintln!("\n{} {}", Color("Failures:", "255;107;107"), runner.failures);
+		process::exit(1);
+	}
+}
+
+fn parse_config(args: Vec<String>) -> Config {
+	let mut retry_on_fail = true;
+	let mut selector = None;
+
+	for arg in args {
+		match arg.as_str() {
+			"--no-retry" => retry_on_fail = false,
+			"--retry" => retry_on_fail = true,
+			_ => match parse_selector(&arg) {
+				Some(value) => selector = Some(value),
+				None => {
+					eprintln!("{} {arg}", Color("Ignoring unknown argument:", "255;107;107"));
+				}
+			},
+		}
+	}
+
+	Config {
+		selector: selector.unwrap_or_else(prompt_selector),
+		retry_on_fail,
 	}
 }
 
@@ -112,65 +146,70 @@ fn parse_selector(s: &str) -> Option<TestSelector> {
 	}
 }
 
-fn step<F: Fn() -> T, T: fmt::Debug + PartialEq>(description: &str, expected: T, action: F) {
-	println!("\n{} {description}", Color("Step:", "255;214;102"));
-	loop {
-		let result = action();
-		if result == expected {
-			println!("  Result: {}", Color("PASS", "123;201;111"));
-			break;
-		}
+impl Runner {
+	fn step<F: Fn() -> T, T: fmt::Debug + PartialEq>(&mut self, description: &str, expected: T, action: F) {
+		println!("\n{} {description}", Color("Step:", "255;214;102"));
+		loop {
+			let result = action();
+			if result == expected {
+				println!("  Result: {}", Color("PASS", "123;201;111"));
+				break;
+			}
 
-		println!("  Result: {} - expected {expected:?}, got {result:?}", Color("FAIL", "255;107;107"));
-		if !confirm("  Test failed, retry? [Y/n]: ", true) {
-			println!("  {}", Color("Marked as failed.", "255;107;107"));
-			break;
+			println!("  Result: {} - expected {expected:?}, got {result:?}", Color("FAIL", "255;107;107"));
+			if !self.retry_on_fail || !confirm("  Test failed, retry? [Y/n]: ", true) {
+				println!("  {}", Color("Marked as failed.", "255;107;107"));
+				self.failures += 1;
+				break;
+			}
+			println!("  {}", Color("Retrying step...", "255;214;102"));
 		}
-		println!("  {}", Color("Retrying step...", "255;214;102"));
 	}
 }
 
-fn test_message_box() {
-	println!("\n{}", Color("==== Testing MessageBox ====", "120;190;255"));
+impl Runner {
+	fn test_message_box(&mut self) {
+		println!("\n{}", Color("==== Testing MessageBox ====", "120;190;255"));
 
-	let icons: &[rustydialogs::MessageIcon] = &[
-		rustydialogs::MessageIcon::Info,
-		rustydialogs::MessageIcon::Warning,
-		rustydialogs::MessageIcon::Error,
-		rustydialogs::MessageIcon::Question,
-	];
+		let icons: &[rustydialogs::MessageIcon] = &[
+			rustydialogs::MessageIcon::Info,
+			rustydialogs::MessageIcon::Warning,
+			rustydialogs::MessageIcon::Error,
+			rustydialogs::MessageIcon::Question,
+		];
 
-	let matrix: &[(rustydialogs::MessageButtons, &[Option<rustydialogs::MessageResult>])] = &[
-		(rustydialogs::MessageButtons::Ok, &[Some(rustydialogs::MessageResult::Ok), None]),
-		(rustydialogs::MessageButtons::OkCancel, &[Some(rustydialogs::MessageResult::Ok), Some(rustydialogs::MessageResult::Cancel), None]),
-		(rustydialogs::MessageButtons::YesNo, &[Some(rustydialogs::MessageResult::Yes), Some(rustydialogs::MessageResult::No), None]),
-		(rustydialogs::MessageButtons::YesNoCancel, &[Some(rustydialogs::MessageResult::Yes), Some(rustydialogs::MessageResult::No), Some(rustydialogs::MessageResult::Cancel), None]),
-	];
+		let matrix: &[(rustydialogs::MessageButtons, &[Option<rustydialogs::MessageResult>])] = &[
+			(rustydialogs::MessageButtons::Ok, &[Some(rustydialogs::MessageResult::Ok), None]),
+			(rustydialogs::MessageButtons::OkCancel, &[Some(rustydialogs::MessageResult::Ok), Some(rustydialogs::MessageResult::Cancel), None]),
+			(rustydialogs::MessageButtons::YesNo, &[Some(rustydialogs::MessageResult::Yes), Some(rustydialogs::MessageResult::No), None]),
+			(rustydialogs::MessageButtons::YesNoCancel, &[Some(rustydialogs::MessageResult::Yes), Some(rustydialogs::MessageResult::No), Some(rustydialogs::MessageResult::Cancel), None]),
+		];
 
-	for &icon in icons {
-		println!("\n{} Icon: {}", Color("Testing", "120;190;255"), Color(format_args!("{:?}", icon), "255;214;102"));
-		let title = format!("[tests] MessageBox - {icon:?}");
-		for &(buttons, results) in matrix {
-			for &result in results {
-				let desc = match result {
-					Some(rustydialogs::MessageResult::Ok) => "Press OK.",
-					Some(rustydialogs::MessageResult::Cancel) => "Press Cancel.",
-					Some(rustydialogs::MessageResult::Yes) => "Press Yes.",
-					Some(rustydialogs::MessageResult::No) => "Press No.",
-					None => "Dismiss the dialog.",
-				};
-				let message = format!("Instruction: {desc}");
-				let full_desc = format!("{desc}\n  Buttons: {}\n  Icon: {}", Color(format_args!("{:?}", buttons), "255;214;102"), Color(format_args!("{:?}", icon), "255;214;102"));
-				step(&full_desc,
-					result,
-					|| rustydialogs::MessageBox {
-						title: &title,
-						message: &message,
-						icon,
-						buttons,
-						owner: None,
-					}.show()
-				);
+		for &icon in icons {
+			println!("\n{} Icon: {}", Color("Testing", "120;190;255"), Color(format_args!("{:?}", icon), "255;214;102"));
+			let title = format!("[tests] MessageBox - {icon:?}");
+			for &(buttons, results) in matrix {
+				for &result in results {
+					let desc = match result {
+						Some(rustydialogs::MessageResult::Ok) => "Press OK.",
+						Some(rustydialogs::MessageResult::Cancel) => "Press Cancel.",
+						Some(rustydialogs::MessageResult::Yes) => "Press Yes.",
+						Some(rustydialogs::MessageResult::No) => "Press No.",
+						None => "Dismiss the dialog.",
+					};
+					let message = format!("Instruction: {desc}");
+					let full_desc = format!("{desc}\n  Buttons: {}\n  Icon: {}", Color(format_args!("{:?}", buttons), "255;214;102"), Color(format_args!("{:?}", icon), "255;214;102"));
+					self.step(&full_desc,
+						result,
+						|| rustydialogs::MessageBox {
+							title: &title,
+							message: &message,
+							icon,
+							buttons,
+							owner: None,
+						}.show()
+					);
+				}
 			}
 		}
 	}
@@ -178,217 +217,225 @@ fn test_message_box() {
 
 fn sorted<T: Ord>(mut items: Vec<T>) -> Vec<T> { items.sort(); items }
 
-fn test_save_file_dialog() {
-	println!("\n{}", Color("==== Testing SaveFileDialog ====", "120;190;255"));
+impl Runner {
+	fn test_save_file_dialog(&mut self) {
+		println!("\n{}", Color("==== Testing SaveFileDialog ====", "120;190;255"));
 
-	let current_dir = env::current_dir().unwrap();
+		let current_dir = env::current_dir().unwrap();
 
-	step("Select `readme.md` and press Save.",
-		Some(current_dir.join("readme.md")),
-		|| rustydialogs::FileDialog {
-			title: "[tests] SaveFileDialog",
-			path: Some(&current_dir),
-			filters: Some(&[
-				rustydialogs::FileFilter {
-					name: "Markdown Files",
-					patterns: &["*.md"],
-				},
-				rustydialogs::FileFilter {
-					name: "Text Files",
-					patterns: &["*.txt"],
-				},
+		self.step("Select `readme.md` and press Save.",
+			Some(current_dir.join("readme.md")),
+			|| rustydialogs::FileDialog {
+				title: "[tests] SaveFileDialog",
+				path: Some(&current_dir),
+				filters: Some(&[
+					rustydialogs::FileFilter {
+						name: "Markdown Files",
+						patterns: &["*.md"],
+					},
+					rustydialogs::FileFilter {
+						name: "Text Files",
+						patterns: &["*.txt"],
+					},
+				]),
+				owner: None,
+			}.save_file()
+		);
+
+		self.step("Dismiss the dialog.",
+			None,
+			|| rustydialogs::FileDialog {
+				title: "[tests] Dismiss SaveFileDialog",
+				path: Some(&current_dir),
+				filters: Some(&[
+					rustydialogs::FileFilter {
+						name: "Text Files",
+						patterns: &["*.txt"],
+					},
+				]),
+				owner: None,
+			}.save_file()
+		);
+	}
+}
+
+impl Runner {
+	fn test_open_file_dialog(&mut self) {
+		println!("\n{}", Color("==== Testing OpenFileDialog ====", "120;190;255"));
+
+		let current_dir = env::current_dir().unwrap();
+
+		self.step("Select `Cargo.toml` and press Open.",
+			Some(current_dir.join("Cargo.toml")),
+			|| rustydialogs::FileDialog {
+				title: "[tests] OpenFileDialog",
+				path: Some(&current_dir),
+				filters: Some(&[
+					rustydialogs::FileFilter {
+						name: "TOML Files",
+						patterns: &["*.toml"],
+					},
+				]),
+				owner: None,
+			}.pick_file()
+		);
+
+		self.step("Select multiple files (`Cargo.toml` and `readme.md`) and press Open.",
+			Some(vec![
+				current_dir.join("Cargo.toml"),
+				current_dir.join("readme.md"),
 			]),
-			owner: None,
-		}.save_file()
-	);
+			|| rustydialogs::FileDialog {
+				title: "[tests] OpenFileDialog (multiple)",
+				path: Some(&current_dir),
+				filters: None,
+				owner: None,
+			}.pick_files().map(sorted)
+		);
 
-	step("Dismiss the dialog.",
-		None,
-		|| rustydialogs::FileDialog {
-			title: "[tests] Dismiss SaveFileDialog",
-			path: Some(&current_dir),
-			filters: Some(&[
-				rustydialogs::FileFilter {
-					name: "Text Files",
-					patterns: &["*.txt"],
-				},
+		self.step("Dismiss the dialog.",
+			None,
+			|| rustydialogs::FileDialog {
+				title: "[tests] Dismiss OpenFileDialog",
+				path: Some(&current_dir),
+				filters: Some(&[
+					rustydialogs::FileFilter {
+						name: "TOML Files",
+						patterns: &["*.toml"],
+					},
+				]),
+				owner: None,
+			}.pick_file()
+		);
+	}
+}
+
+impl Runner {
+	fn test_folder_dialog(&mut self) {
+		println!("\n{}", Color("==== Testing FolderDialog ====", "120;190;255"));
+
+		let current_dir = env::current_dir().unwrap();
+
+		self.step("Select the `src` folder and press Open.",
+			Some(current_dir.join("src")),
+			|| rustydialogs::FileDialog {
+				title: "[tests] FileDialog choose_folder",
+				path: Some(&current_dir),
+				filters: None,
+				owner: None,
+			}.choose_folder()
+		);
+
+		self.step("Select multiple folders (`src` and `examples`) and press Open.",
+			Some(vec![
+				current_dir.join("examples"),
+				current_dir.join("src"),
 			]),
-			owner: None,
-		}.save_file()
-	);
+			|| rustydialogs::FileDialog {
+				title: "[tests] FileDialog choose_folders",
+				path: Some(&current_dir),
+				filters: None,
+				owner: None,
+			}.choose_folders().map(sorted)
+		);
+
+		self.step("Dismiss the dialog.",
+			None,
+			|| rustydialogs::FileDialog {
+				title: "[tests] Dismiss FileDialog choose_folder",
+				path: Some(&current_dir),
+				filters: None,
+				owner: None,
+			}.choose_folder()
+		);
+	}
 }
 
-fn test_open_file_dialog() {
-	println!("\n{}", Color("==== Testing OpenFileDialog ====", "120;190;255"));
+impl Runner {
+	fn test_color_picker(&mut self) {
+		println!("\n{}", Color("==== Testing ColorPicker ====", "120;190;255"));
 
-	let current_dir = env::current_dir().unwrap();
+		self.step("Select pure RED (#FF0000) and press OK.",
+			Some(rustydialogs::ColorValue { red: 255, green: 0, blue: 0 }),
+			|| rustydialogs::ColorPicker {
+				title: "[tests] ColorPicker",
+				value: rustydialogs::ColorValue { red: 255, green: 0, blue: 0 },
+				owner: None,
+			}.show()
+		);
 
-	step("Select `Cargo.toml` and press Open.",
-		Some(current_dir.join("Cargo.toml")),
-		|| rustydialogs::FileDialog {
-			title: "[tests] OpenFileDialog",
-			path: Some(&current_dir),
-			filters: Some(&[
-				rustydialogs::FileFilter {
-					name: "TOML Files",
-					patterns: &["*.toml"],
-				},
-			]),
-			owner: None,
-		}.pick_file()
-	);
+		self.step("Select specific color (#4FB3A3) (79, 179, 163) and press OK.",
+			Some(rustydialogs::ColorValue { red: 79, green: 179, blue: 163 }),
+			|| rustydialogs::ColorPicker {
+				title: "[tests] ColorPicker",
+				value: rustydialogs::ColorValue { red: 255, green: 0, blue: 0 },
+				owner: None,
+			}.show()
+		);
 
-	step("Select multiple files (`Cargo.toml` and `readme.md`) and press Open.",
-		Some(vec![
-			current_dir.join("Cargo.toml"),
-			current_dir.join("readme.md"),
-		]),
-		|| rustydialogs::FileDialog {
-			title: "[tests] OpenFileDialog (multiple)",
-			path: Some(&current_dir),
-			filters: None,
-			owner: None,
-		}.pick_files().map(sorted)
-	);
-
-	step("Dismiss the dialog.",
-		None,
-		|| rustydialogs::FileDialog {
-			title: "[tests] Dismiss OpenFileDialog",
-			path: Some(&current_dir),
-			filters: Some(&[
-				rustydialogs::FileFilter {
-					name: "TOML Files",
-					patterns: &["*.toml"],
-				},
-			]),
-			owner: None,
-		}.pick_file()
-	);
+		self.step("Dismiss the dialog.",
+			None,
+			|| rustydialogs::ColorPicker {
+				title: "[tests] Dismiss ColorPicker",
+				value: rustydialogs::ColorValue { red: 255, green: 0, blue: 0 },
+				owner: None,
+			}.show()
+		);
+	}
 }
 
-fn test_folder_dialog() {
-	println!("\n{}", Color("==== Testing FolderDialog ====", "120;190;255"));
+impl Runner {
+	fn test_text_input(&mut self) {
+		println!("\n{}", Color("==== Testing TextInput ====", "120;190;255"));
 
-	let current_dir = env::current_dir().unwrap();
+		self.step("Enter `Hello, Rust!` and press OK.",
+			Some("Hello, Rust!".to_string()),
+			|| rustydialogs::TextInput {
+				title: "[tests] TextInput",
+				message: "Instruction: Enter `Hello, Rust!` and press OK.",
+				value: "",
+				mode: rustydialogs::TextInputMode::SingleLine,
+				owner: None,
+			}.show()
+		);
 
-	step("Select the `src` folder and press Open.",
-		Some(current_dir.join("src")),
-		|| rustydialogs::FileDialog {
-			title: "[tests] FileDialog choose_folder",
-			path: Some(&current_dir),
-			filters: None,
-			owner: None,
-		}.choose_folder()
-	);
+		self.step("Enter `Password123` and press OK.",
+			Some(String::from("Password123")),
+			|| rustydialogs::TextInput {
+				title: "[tests] TextInput",
+				message: "Instruction: Enter `Password123` and press OK.",
+				value: "",
+				mode: rustydialogs::TextInputMode::Password,
+				owner: None,
+			}.show()
+		);
 
-	step("Select multiple folders (`src` and `examples`) and press Open.",
-		Some(vec![
-			current_dir.join("examples"),
-			current_dir.join("src"),
-		]),
-		|| rustydialogs::FileDialog {
-			title: "[tests] FileDialog choose_folders",
-			path: Some(&current_dir),
-			filters: None,
-			owner: None,
-		}.choose_folders().map(sorted)
-	);
+		self.step("Enter these three lines and press OK.",
+			Some(String::from("Line 1\nLine 2\nLine 3")),
+			|| rustydialogs::TextInput {
+				title: "[tests] TextInput",
+				message: "Instruction: Enter these three lines and press OK.\nLine 1\nLine 2\nLine 3",
+				value: "",
+				mode: rustydialogs::TextInputMode::MultiLine,
+				owner: None,
+			}.show()
+		);
 
-	step("Dismiss the dialog.",
-		None,
-		|| rustydialogs::FileDialog {
-			title: "[tests] Dismiss FileDialog choose_folder",
-			path: Some(&current_dir),
-			filters: None,
-			owner: None,
-		}.choose_folder()
-	);
+		self.step("Dismiss the dialog.",
+			None,
+			|| rustydialogs::TextInput {
+				title: "[tests] Dismiss TextInput",
+				message: "Instruction: Dismiss the dialog (e.g. by pressing Esc or clicking the close button).",
+				value: "",
+				mode: rustydialogs::TextInputMode::SingleLine,
+				owner: None,
+			}.show()
+		);
+	}
 }
 
-fn test_color_picker() {
-	println!("\n{}", Color("==== Testing ColorPicker ====", "120;190;255"));
-
-	step("Select pure RED (#FF0000) and press OK.",
-		Some(rustydialogs::ColorValue { red: 255, green: 0, blue: 0 }),
-		|| rustydialogs::ColorPicker {
-			title: "[tests] ColorPicker",
-			value: rustydialogs::ColorValue { red: 255, green: 0, blue: 0 },
-			owner: None,
-		}.show()
-	);
-
-	step("Select specific color (#4FB3A3) (79, 179, 163) and press OK.",
-		Some(rustydialogs::ColorValue { red: 79, green: 179, blue: 163 }),
-		|| rustydialogs::ColorPicker {
-			title: "[tests] ColorPicker",
-			value: rustydialogs::ColorValue { red: 255, green: 0, blue: 0 },
-			owner: None,
-		}.show()
-	);
-
-	step("Dismiss the dialog.",
-		None,
-		|| rustydialogs::ColorPicker {
-			title: "[tests] Dismiss ColorPicker",
-			value: rustydialogs::ColorValue { red: 255, green: 0, blue: 0 },
-			owner: None,
-		}.show()
-	);
-}
-
-fn test_text_input() {
-	println!("\n{}", Color("==== Testing TextInput ====", "120;190;255"));
-
-	step("Enter `Hello, Rust!` and press OK.",
-		Some("Hello, Rust!".to_string()),
-		|| rustydialogs::TextInput {
-			title: "[tests] TextInput",
-			message: "Instruction: Enter `Hello, Rust!` and press OK.",
-			value: "",
-			mode: rustydialogs::TextInputMode::SingleLine,
-			owner: None,
-		}.show()
-	);
-
-	step("Enter `Password123` and press OK.",
-		Some(String::from("Password123")),
-		|| rustydialogs::TextInput {
-			title: "[tests] TextInput",
-			message: "Instruction: Enter `Password123` and press OK.",
-			value: "",
-			mode: rustydialogs::TextInputMode::Password,
-			owner: None,
-		}.show()
-	);
-
-	step("Enter these three lines and press OK.",
-		Some(String::from("Line 1\nLine 2\nLine 3")),
-		|| rustydialogs::TextInput {
-			title: "[tests] TextInput",
-			message: "Instruction: Enter these three lines and press OK.\nLine 1\nLine 2\nLine 3",
-			value: "",
-			mode: rustydialogs::TextInputMode::MultiLine,
-			owner: None,
-		}.show()
-	);
-
-	step("Dismiss the dialog.",
-		None,
-		|| rustydialogs::TextInput {
-			title: "[tests] Dismiss TextInput",
-			message: "Instruction: Dismiss the dialog (e.g. by pressing Esc or clicking the close button).",
-			value: "",
-			mode: rustydialogs::TextInputMode::SingleLine,
-			owner: None,
-		}.show()
-	);
-}
-
-fn test_notification() {
-	println!("\n{}", Color("==== Testing Notification ====", "120;190;255"));
-
-	fn notify(p: &rustydialogs::Notification<'_>) {
+impl Runner {
+	fn notify(&mut self, p: &rustydialogs::Notification<'_>) {
 		println!("\n{} Confirm {} appeared.", Color("Step:", "255;214;102"), Color(format_args!("{:?}", p.icon), "255;214;102"));
 		loop {
 			p.show();
@@ -397,43 +444,49 @@ fn test_notification() {
 				break;
 			}
 			println!("  Result: {}", Color("FAIL", "255;107;107"));
-			if !confirm("  Test failed, retry? [Y/n]: ", true) {
+			if !self.retry_on_fail || !confirm("  Test failed, retry? [Y/n]: ", true) {
+				self.failures += 1;
 				break;
 			}
 		}
 	}
 
-	notify(&rustydialogs::Notification {
-		app_id: "rustydialogs-tests",
-		title: "[INFO] Notification",
-		message: "This is a test notification.\nIt should appear as a native notification on your system.",
-		icon: rustydialogs::MessageIcon::Info,
-		duration: rustydialogs::NotifyDuration::Short,
-	});
+	fn test_notification(&mut self) {
+		println!("\n{}", Color("==== Testing Notification ====", "120;190;255"));
 
-	notify(&rustydialogs::Notification {
-		app_id: "rustydialogs-tests",
-		title: "[WARN] Notification",
-		message: "This is a test notification.\nIt should appear as a native notification on your system.",
-		icon: rustydialogs::MessageIcon::Warning,
-		duration: rustydialogs::NotifyDuration::Short,
-	});
 
-	notify(&rustydialogs::Notification {
-		app_id: "rustydialogs-tests",
-		title: "[ERROR] Notification",
-		message: "This is a test notification.\nIt should appear as a native notification on your system.",
-		icon: rustydialogs::MessageIcon::Error,
-		duration: rustydialogs::NotifyDuration::Short,
-	});
+		self.notify(&rustydialogs::Notification {
+			app_id: "rustydialogs-tests",
+			title: "[INFO] Notification",
+			message: "This is a test notification.\nIt should appear as a native notification on your system.",
+			icon: rustydialogs::MessageIcon::Info,
+			duration: rustydialogs::NotifyDuration::Short,
+		});
 
-	notify(&rustydialogs::Notification {
-		app_id: "rustydialogs-tests",
-		title: "[QUESTION] Notification",
-		message: "This is a test notification.\nIt should appear as a native notification on your system.",
-		icon: rustydialogs::MessageIcon::Question,
-		duration: rustydialogs::NotifyDuration::Short,
-	});
+		self.notify(&rustydialogs::Notification {
+			app_id: "rustydialogs-tests",
+			title: "[WARN] Notification",
+			message: "This is a test notification.\nIt should appear as a native notification on your system.",
+			icon: rustydialogs::MessageIcon::Warning,
+			duration: rustydialogs::NotifyDuration::Short,
+		});
+
+		self.notify(&rustydialogs::Notification {
+			app_id: "rustydialogs-tests",
+			title: "[ERROR] Notification",
+			message: "This is a test notification.\nIt should appear as a native notification on your system.",
+			icon: rustydialogs::MessageIcon::Error,
+			duration: rustydialogs::NotifyDuration::Short,
+		});
+
+		self.notify(&rustydialogs::Notification {
+			app_id: "rustydialogs-tests",
+			title: "[QUESTION] Notification",
+			message: "This is a test notification.\nIt should appear as a native notification on your system.",
+			icon: rustydialogs::MessageIcon::Question,
+			duration: rustydialogs::NotifyDuration::Short,
+		});
+	}
 }
 
 fn confirm(prompt: &str, default: bool) -> bool {

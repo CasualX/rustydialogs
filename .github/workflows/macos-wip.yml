@@ -1,0 +1,86 @@
+name: macOS GUI MessageBox Recording
+
+on:
+  workflow_dispatch:
+
+jobs:
+  macos-gui:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      CARGO_TERM_COLOR: always
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install tools
+        run: |
+          brew install cliclick ffmpeg
+
+      - name: Build tests example
+        run: cargo build --example tests
+
+      - name: Record and drive message box tests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          record_dir="$PWD/tmp/macos-gui-artifacts"
+          mkdir -p "$record_dir"
+          automation_log="$record_dir/automation.log"
+          tests_log="$record_dir/tests.log"
+          ffmpeg_log="$record_dir/ffmpeg.log"
+          recording="$record_dir/message-boxes.mp4"
+
+          log() {
+            printf '%s\n' "$1" | tee -a "$automation_log"
+          }
+
+          cleanup() {
+            set +e
+            if [[ -n "${ffmpeg_pid:-}" ]] && kill -0 "$ffmpeg_pid" 2>/dev/null; then
+              kill -INT "$ffmpeg_pid"
+              wait "$ffmpeg_pid"
+            fi
+            if [[ -n "${tests_pid:-}" ]] && kill -0 "$tests_pid" 2>/dev/null; then
+              kill "$tests_pid"
+              wait "$tests_pid"
+            fi
+          }
+          trap cleanup EXIT
+
+          log "starting ffmpeg screen recording"
+          ffmpeg -y -f avfoundation -framerate 30 -i "0:none" "$recording" >"$ffmpeg_log" 2>&1 &
+          ffmpeg_pid=$!
+
+          log "running screen-recording permission helper"
+          osascript .github/scripts/macos/allow_screen_recording.applescript 2>&1 | tee -a "$automation_log"
+
+          sleep 2
+
+          log "launching tests example in message-box no-retry mode"
+          ./target/debug/examples/tests m --no-retry >"$tests_log" 2>&1 &
+          tests_pid=$!
+
+          log "driving message box dialogs"
+          osascript .github/scripts/macos/drive_message_box_tests.applescript 2>&1 | tee -a "$automation_log"
+
+          log "waiting for tests example to exit"
+          wait "$tests_pid"
+          tests_pid=
+          log "tests example finished"
+          sleep 2
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-gui-artifacts
+          path: |
+            tmp/macos-gui-artifacts/automation.log
+            tmp/macos-gui-artifacts/message-boxes.mp4
+            tmp/macos-gui-artifacts/ffmpeg.log
+            tmp/macos-gui-artifacts/tests.log
