@@ -12,14 +12,12 @@ fn run_on_main<R: Send, F: FnOnce(MainThreadMarker) -> R + Send>(run: F) -> R {
 		run(mtm)
 	}
 	else {
-		let mtm = unsafe { MainThreadMarker::new_unchecked() };
-		let app = NSApplication::sharedApplication(mtm);
-		if app.isRunning() {
-			dispatch2::run_on_main(run)
-		}
-		else {
+		// NSRunningApplication can be queried from a worker; NSApplication cannot.
+		if !NSRunningApplication::currentApplication().isFinishedLaunching() {
 			panic!("cannot show AppKit dialogs from a non-main thread before NSApplication is running");
 		}
+		// The caller must keep the main event loop running while this waits.
+		dispatch2::run_on_main(run)
 	}
 }
 
@@ -35,6 +33,9 @@ impl PolicyManager {
 
 		if initial_policy == NSApplicationActivationPolicy::Prohibited {
 			app.setActivationPolicy(NSApplicationActivationPolicy::Accessory);
+			if !NSRunningApplication::currentApplication().isFinishedLaunching() {
+				app.finishLaunching();
+			}
 		}
 
 		PolicyManager { app, initial_policy }
@@ -132,20 +133,10 @@ fn filter_types(filters: Option<&[FileFilter<'_>]>) -> Option<Vec<String>> {
 }
 
 fn pattern_to_file_type(pattern: &str) -> Option<String> {
-	let pattern = pattern.trim();
-	if pattern.is_empty() || pattern == "*" || pattern == "*.*" {
-		return None;
-	}
-
-	let file_type = pattern.strip_prefix("*.")
-		.or_else(|| pattern.strip_prefix('.'))
-		.unwrap_or(pattern);
+	let file_type = pattern.strip_prefix("*.")?;
 
 	if file_type.is_empty()
-		|| file_type.contains('*')
-		|| file_type.contains('?')
-		|| file_type.contains('/')
-		|| file_type.contains('\\')
+		|| file_type.contains(['*', '?', '[', ']', '{', '}', '/', '\\'])
 	{
 		return None;
 	}
@@ -389,7 +380,8 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 
 		let container = NSView::initWithFrame(NSView::alloc(mtm), color_well_container_frame());
 		let well = NSColorWell::initWithFrame(NSColorWell::alloc(mtm), color_well_frame());
-		let _ = NSColorWellStyle::Default;
+		let color_panel = NSColorPanel::sharedColorPanel(mtm);
+		let was_visible = color_panel.isVisible();
 		let initial = color_value_to_nscolor(initial);
 		well.setColor(&initial);
 		container.addSubview(&well);
@@ -397,6 +389,8 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 
 		begin_alert_sheet(&alert, owner.as_deref(), mtm);
 		let response = alert.runModal();
+		well.deactivate();
+		if !was_visible { color_panel.orderOut(None); }
 		if response != NSAlertFirstButtonReturn {
 			return None;
 		}
@@ -407,8 +401,14 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 
 #[inline]
 pub fn notify_setup(_app_id: &str) -> bool {
-	// No explicit setup required for NSUserNotificationCenter.
-	true
+	// Unbundled executables may not have a notification center.
+	notification_center().is_some()
+}
+
+#[allow(deprecated)]
+fn notification_center() -> Option<rc::Retained<NSUserNotificationCenter>> {
+	// The generated binding assumes non-null, but command-line apps can get nil.
+	unsafe { msg_send![NSUserNotificationCenter::class(), defaultUserNotificationCenter] }
 }
 
 #[allow(deprecated)]
@@ -418,7 +418,7 @@ pub fn notify(p: &Notification<'_>) {
 	}
 
 	run_on_main(|_mtm| {
-		let center = NSUserNotificationCenter::defaultUserNotificationCenter();
+		let Some(center) = notification_center() else { return; };
 		let notification = NSUserNotification::new();
 
 		let title = NSString::from_str(p.title);
@@ -546,4 +546,41 @@ fn initial_directory_and_name(initial_path: Option<&Path>) -> (Option<PathBuf>, 
 	let directory = path.parent().map(Path::to_path_buf);
 	let file_name = path.file_name().and_then(|name| name.to_str()).map(str::to_string);
 	(directory, file_name)
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn extension_filters_are_combined() {
+		let filters = [
+			FileFilter { name: "Sources", patterns: &["*.toml", "*.md"] },
+			FileFilter { name: "Text", patterns: &["*.txt", "*.toml"] },
+		];
+		assert_eq!(filter_types(Some(&filters)), Some(vec!["toml".into(), "md".into(), "txt".into()]));
+	}
+
+	#[test]
+	fn unsupported_filters_leave_the_picker_unrestricted() {
+		for pattern in ["*", "*.*", "Cargo.toml", "data-*.txt", "*.t?xt", "*.[ch]", "*.{rs,toml}"] {
+			let filters = [FileFilter { name: "Files", patterns: &["*.md", pattern] }];
+			assert_eq!(filter_types(Some(&filters)), None, "{pattern}");
+		}
+	}
+
+	#[test]
+	fn file_urls_preserve_special_characters() {
+		// macOS file URLs use decomposed Unicode for filesystem paths.
+		let path = Path::new("/tmp/cafe\u{301} Ω \"quoted\"\nfile.txt\n");
+		assert_eq!(url_into_pathbuf(path_to_file_url(path)), Some(path.to_path_buf()));
+	}
+
+	#[test]
+	fn srgb_colors_round_trip() {
+		for value in 0..=255 {
+			let color = ColorValue { red: value, green: 255 - value, blue: value / 2 };
+			assert_eq!(nscolor_to_color_value(&color_value_to_nscolor(color)), Some(color));
+		}
+	}
 }

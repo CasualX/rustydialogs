@@ -1,0 +1,614 @@
+Environment
+  Date: 2026-11-03
+  OS: macOS Sonoma 14.8.9 (23J631), QEMU/KVM
+  Arch: x86_64
+  Features: appkit
+  rustc/cargo: 1.99.1
+
+Checks
+  cargo test --lib --features appkit: 4 passed
+  cargo check --examples --features appkit: passed (native)
+  cargo build --examples --features appkit: passed (native)
+  cargo check --examples --target=aarch64-apple-darwin --features appkit: passed (compile only)
+
+MessageBox actions
+  32 button-click cases pass.
+  8 Escape cases return Some(Cancel), differing from the runner's None expectation.
+  8 OK-only/YesNo dismissal cases cannot be dismissed by Escape, Cmd-Period, or
+  Cmd-W. A fallback OK/Yes click advanced the runner; these are NOT successful
+  dismissals and their resulting strict failures are expected.
+
+Step 1: Info / Ok / OK
+Action: button click
+Press OK.
+  Buttons: Ok
+  Icon: Info
+  Result: PASS
+
+Step 2: Info / Ok / DISMISS
+Action: fallback button click (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: Ok
+  Icon: Info
+  Result: FAIL - expected None, got Some(Ok)
+  Marked as failed.
+
+Step 3: Info / OkCancel / OK
+Action: button click
+Press OK.
+  Buttons: OkCancel
+  Icon: Info
+  Result: PASS
+
+Step 4: Info / OkCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: OkCancel
+  Icon: Info
+  Result: PASS
+
+Step 5: Info / OkCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Info
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Step 6: Info / YesNo / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNo
+  Icon: Info
+  Result: PASS
+
+Step 7: Info / YesNo / No
+Action: button click
+Press No.
+  Buttons: YesNo
+  Icon: Info
+  Result: PASS
+
+Step 8: Info / YesNo / DISMISS
+Action: fallback button click (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Info
+  Result: FAIL - expected None, got Some(Yes)
+  Marked as failed.
+
+Step 9: Info / YesNoCancel / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: PASS
+
+Step 10: Info / YesNoCancel / No
+Action: button click
+Press No.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: PASS
+
+Step 11: Info / YesNoCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: PASS
+
+Step 12: Info / YesNoCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Testing Icon: Warning
+
+Step 13: Warning / Ok / OK
+Action: button click
+Press OK.
+  Buttons: Ok
+  Icon: Warning
+  Result: PASS
+
+Step 14: Warning / Ok / DISMISS
+Action: fallback button click (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: Ok
+  Icon: Warning
+  Result: FAIL - expected None, got Some(Ok)
+  Marked as failed.
+
+Step 15: Warning / OkCancel / OK
+Action: button click
+Press OK.
+  Buttons: OkCancel
+  Icon: Warning
+  Result: PASS
+
+Step 16: Warning / OkCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: OkCancel
+  Icon: Warning
+  Result: PASS
+
+Step 17: Warning / OkCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Warning
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Step 18: Warning / YesNo / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNo
+  Icon: Warning
+  Result: PASS
+
+Step 19: Warning / YesNo / No
+Action: button click
+Press No.
+  Buttons: YesNo
+  Icon: Warning
+  Result: PASS
+
+Step 20: Warning / YesNo / DISMISS
+Action: fallback button click (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Warning
+  Result: FAIL - expected None, got Some(Yes)
+  Marked as failed.
+
+Step 21: Warning / YesNoCancel / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: PASS
+
+Step 22: Warning / YesNoCancel / No
+Action: button click
+Press No.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: PASS
+
+Step 23: Warning / YesNoCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: PASS
+
+Step 24: Warning / YesNoCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Testing Icon: Error
+
+Step 25: Error / Ok / OK
+Action: button click
+Press OK.
+  Buttons: Ok
+  Icon: Error
+  Result: PASS
+
+Step 26: Error / Ok / DISMISS
+Action: fallback button click (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: Ok
+  Icon: Error
+  Result: FAIL - expected None, got Some(Ok)
+  Marked as failed.
+
+Step 27: Error / OkCancel / OK
+Action: button click
+Press OK.
+  Buttons: OkCancel
+  Icon: Error
+  Result: PASS
+
+Step 28: Error / OkCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: OkCancel
+  Icon: Error
+  Result: PASS
+
+Step 29: Error / OkCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Error
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Step 30: Error / YesNo / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNo
+  Icon: Error
+  Result: PASS
+
+Step 31: Error / YesNo / No
+Action: button click
+Press No.
+  Buttons: YesNo
+  Icon: Error
+  Result: PASS
+
+Step 32: Error / YesNo / DISMISS
+Action: fallback button click (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Error
+  Result: FAIL - expected None, got Some(Yes)
+  Marked as failed.
+
+Step 33: Error / YesNoCancel / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: PASS
+
+Step 34: Error / YesNoCancel / No
+Action: button click
+Press No.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: PASS
+
+Step 35: Error / YesNoCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: PASS
+
+Step 36: Error / YesNoCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Testing Icon: Question
+
+Step 37: Question / Ok / OK
+Action: button click
+Press OK.
+  Buttons: Ok
+  Icon: Question
+  Result: PASS
+
+Step 38: Question / Ok / DISMISS
+Action: fallback button click (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: Ok
+  Icon: Question
+  Result: FAIL - expected None, got Some(Ok)
+  Marked as failed.
+
+Step 39: Question / OkCancel / OK
+Action: button click
+Press OK.
+  Buttons: OkCancel
+  Icon: Question
+  Result: PASS
+
+Step 40: Question / OkCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: OkCancel
+  Icon: Question
+  Result: PASS
+
+Step 41: Question / OkCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Question
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Step 42: Question / YesNo / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNo
+  Icon: Question
+  Result: PASS
+
+Step 43: Question / YesNo / No
+Action: button click
+Press No.
+  Buttons: YesNo
+  Icon: Question
+  Result: PASS
+
+Step 44: Question / YesNo / DISMISS
+Action: fallback button click (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Question
+  Result: FAIL - expected None, got Some(Yes)
+  Marked as failed.
+
+Step 45: Question / YesNoCancel / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: PASS
+
+Step 46: Question / YesNoCancel / No
+Action: button click
+Press No.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: PASS
+
+Step 47: Question / YesNoCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: PASS
+
+Step 48: Question / YesNoCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Failures: 16
+
+
+===== OpenFileDialog =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing OpenFileDialog ====
+
+Step: Select `Cargo.toml` and press Open.
+  Result: PASS
+
+Step: Select multiple files (`Cargo.toml` and `readme.md`) and press Open.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+All requested steps passed.
+
+
+===== SaveFileDialog =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing SaveFileDialog ====
+
+Step: Select `readme.md` and press Save.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+All requested steps passed.
+
+
+===== FolderDialog =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing FolderDialog ====
+
+Step: Select the `src` folder and press Open.
+  Result: PASS
+
+Step: Select multiple folders (`src` and `examples`) and press Open.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+All requested steps passed.
+
+
+===== TextInput =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing TextInput ====
+
+Step: Enter `Hello, Rust!` and press OK.
+  Result: PASS
+
+Step: Enter `Password123` and press OK.
+  Result: PASS
+
+Step: Enter these three lines and press OK.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+All requested steps passed.
+
+
+===== ColorPicker =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing ColorPicker ====
+
+Step: Select pure RED (#FF0000) and press OK.
+2026-11-03 17:50:52.790 tests[6954:72810] WARNING: Secure coding is automatically enabled for restorable state! However, not on all supported macOS versions of this application. Opt-in to secure coding explicitly by implementing NSApplicationDelegate.applicationSupportsSecureRestorableState:.
+  Result: PASS
+
+Step: Select specific color (#4FB3A3) (79, 179, 163) and press OK.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+All requested steps passed.
+
+
+===== Notification (app bundle; notifications enabled in System Settings) =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing Notification ====
+
+Step: Confirm Info appeared.
+Confirm notification? [Y/n]:   Result: PASS
+
+Step: Confirm Warning appeared.
+Confirm notification? [Y/n]:   Result: PASS
+
+Step: Confirm Error appeared.
+Confirm notification? [Y/n]:   Result: PASS
+
+Step: Confirm Question appeared.
+Confirm notification? [Y/n]:   Result: PASS
+
+All requested steps passed.
+
+
+===== Unbundled notification availability =====
+CASE: notification-edge
+SETUP: false
+Notification call returned.
+
+
+===== Text with Unicode, quotes, backslash, tab and trailing CR/LF =====
+CASE: text-edge
+expected: Some("café Ω \"quoted\" \\ \t\r\n\n")
+actual: Some("café Ω \"quoted\" \\ \t\r\n\n")
+MATCH: true
+
+
+===== Empty text =====
+CASE: text-empty
+actual: Some("")
+MATCH: true
+
+
+===== Multiple files with newlines, quotes and Unicode =====
+CASE: files-edge
+expected: ["/Users/tester/applescript-testing/fixtures/files/a\nb.txt\n", "/Users/tester/applescript-testing/fixtures/files/β \"quoted\".txt"]
+actual: Some(["/Users/tester/applescript-testing/fixtures/files/a\nb.txt\n", "/Users/tester/applescript-testing/fixtures/files/β \"quoted\".txt"])
+MATCH: true
+
+
+===== Multiple folders with newlines, quotes and Unicode =====
+CASE: folders-edge
+expected: ["/Users/tester/applescript-testing/fixtures/folders/first\nfolder", "/Users/tester/applescript-testing/fixtures/folders/second\"β\n"]
+actual: Some(["/Users/tester/applescript-testing/fixtures/folders/first\nfolder", "/Users/tester/applescript-testing/fixtures/folders/second\"β\n"])
+MATCH: true
+
+
+===== Relative initial folder =====
+CASE: relative-folder
+expected: "/Users/tester/rustydialogs/src"
+actual: Some("/Users/tester/rustydialogs/src")
+MATCH: true
+
+
+===== Owned sheets and worker-thread dispatch =====
+
+Rusty Dialogs + winit
+Focus the window, then press a key to open a native dialog owned by the winit window:
+  M = MessageBox
+  O = OpenFileDialog (single file)
+  A = OpenFileDialog (multiple files)
+  S = SaveFileDialog
+  F = FolderDialog (single folder)
+  G = FolderDialog (multiple folders)
+  C = ColorPicker
+  T = TextInput (single line)
+  P = TextInput (password)
+  L = TextInput (multi-line)
+  N = Notification
+  H = Print this help
+  Q or Esc = Quit
+ready
+worker result -> Some(Ok)
+message box -> Some(Yes)
+open file -> None
+text input -> Some("OwnedText")
+password input -> None
+multi-line input -> Some("Line 1\nLine 2")
+save file -> None
+choose folder -> None
+choose folders -> None
+2026-11-03 17:57:29.164 worker[7263:77018] WARNING: Secure coding is automatically enabled for restorable state! However, not on all supported macOS versions of this application. Opt-in to secure coding explicitly by implementing NSApplicationDelegate.applicationSupportsSecureRestorableState:.
+color picker -> Some(ColorValue { red: 79, green: 179, blue: 163 })
+
+
+===== Worker before application launch =====
+CASE: worker-before-launch
+
+thread '<unnamed>' (77977) panicked at /Users/tester/rustydialogs/src/macos/appkit.rs:17:13:
+cannot show AppKit dialogs from a non-main thread before NSApplication is running
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Worker rejected: true
+
+
+Driver notes
+  Color edits used Control-A / Control-Shift-E to replace the hex value because
+  the command-line test application has no Edit menu for Command-A.
+  The Colors palette opened by the owned dialog was absent from the window list
+  after accepting. The owner regained focus and continued handling keys.
+  The worker probe uses the winit example with an added W key that spawns a
+  worker thread; the main event loop keeps running. All other keys are unchanged.
+  Owned open-file acceptance also returned /Users/tester/rustydialogs/Cargo.toml
+  in a separate smoke test; the recorded integration run covers its cancellation.
+  Notification bundle: ~/applescript-testing/AppKitTests.app, identifier
+  org.rustydialogs.appkit-tests. All four banners were observed before answering y.

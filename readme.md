@@ -42,7 +42,8 @@ Extensively tested on Linux Ubuntu 24 LTS.
 
 ### macOS
 
-AppleScript backend tested on macOS Sonoma 14.8.9 (x86_64, QEMU/KVM). See [testreport.md](testreport.md) for results and limitations.
+AppleScript and AppKit backends tested on macOS Sonoma 14.8.9 (x86_64, QEMU/KVM).
+See [testreport.md](testreport.md) for results and limitations.
 
 - By default, AppleScript-based dialogs are used.
 

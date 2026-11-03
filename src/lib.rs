@@ -25,11 +25,13 @@ Extensively tested on Linux Ubuntu 24 LTS.
 
 ### macOS
 
-AppleScript backend tested on macOS Sonoma 14.8.9 (x86_64, QEMU/KVM). See the repository's testreport.md for results and limitations.
+AppleScript and AppKit backends tested on macOS Sonoma 14.8.9 (x86_64, QEMU/KVM).
+See the repository's testreport.md for results and limitations.
 
 - By default, AppleScript-based dialogs are used.
 
 - Optional AppKit-based dialogs and notifications are also available. (feature: `appkit`)
+  Worker-thread calls require a launched application with its main event loop running.
 
 */
 
