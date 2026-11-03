@@ -10,6 +10,8 @@ Rusty Dialogs
 
 Rusty Dialogs is a Rust library that provides a simple and cross-platform way to display native dialog boxes and notifications.
 
+Requires Rust 1.95 or later (edition 2024).
+
 Dialogs
 -------
 

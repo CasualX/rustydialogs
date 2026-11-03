@@ -1,9 +1,11 @@
 use super::*;
 
 unsafe fn style_dialog_layout(dialog: *mut gtk_sys::GtkWidget) {
-	let content = gtk_sys::gtk_dialog_get_content_area(dialog as *mut gtk_sys::GtkDialog);
-	gtk_sys::gtk_box_set_spacing(content as *mut gtk_sys::GtkBox, 10);
-	gtk_sys::gtk_container_set_border_width(content as *mut gtk_sys::GtkContainer, 14);
+	unsafe {
+		let content = gtk_sys::gtk_dialog_get_content_area(dialog as *mut gtk_sys::GtkDialog);
+		gtk_sys::gtk_box_set_spacing(content as *mut gtk_sys::GtkBox, 10);
+		gtk_sys::gtk_container_set_border_width(content as *mut gtk_sys::GtkContainer, 14);
+	}
 }
 
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {

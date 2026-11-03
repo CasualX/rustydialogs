@@ -407,50 +407,27 @@ impl<'a> Notification<'a> {
 	}
 }
 
-#[cfg(windows)]
-mod win32;
-#[cfg(windows)]
-use win32::*;
-
-#[cfg(any(
-	target_os = "linux",
-	target_os = "freebsd",
-	target_os = "dragonfly",
-	target_os = "netbsd",
-	target_os = "openbsd",
-))]
-mod linux;
-#[cfg(any(
-	target_os = "linux",
-	target_os = "freebsd",
-	target_os = "dragonfly",
-	target_os = "netbsd",
-	target_os = "openbsd",
-))]
-use linux::*;
-
-#[cfg(target_os = "macos")]
-mod macos;
-#[cfg(target_os = "macos")]
-use macos::*;
-
-#[cfg(not(any(
-	windows,
-	target_os = "linux",
-	target_os = "freebsd",
-	target_os = "dragonfly",
-	target_os = "netbsd",
-	target_os = "openbsd",
-	target_os = "macos",
-)))]
-mod unsupported;
-#[cfg(not(any(
-	windows,
-	target_os = "linux",
-	target_os = "freebsd",
-	target_os = "dragonfly",
-	target_os = "netbsd",
-	target_os = "openbsd",
-	target_os = "macos",
-)))]
-use unsupported::*;
+cfg_select! {
+	windows => {
+		mod win32;
+		use win32::*;
+	}
+	any(
+		target_os = "linux",
+		target_os = "freebsd",
+		target_os = "dragonfly",
+		target_os = "netbsd",
+		target_os = "openbsd",
+	) => {
+		mod linux;
+		use linux::*;
+	}
+	target_os = "macos" => {
+		mod macos;
+		use macos::*;
+	}
+	_ => {
+		mod unsupported;
+		use unsupported::*;
+	}
+}

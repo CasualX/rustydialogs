@@ -10,10 +10,10 @@ mod ifiledialog;
 mod input;
 mod message;
 mod color;
-#[cfg(feature = "winrt-toast")]
-mod toast;
-#[cfg(not(feature = "winrt-toast"))]
-mod tray;
+cfg_select! {
+	feature = "winrt-toast" => { mod toast; }
+	_ => { mod tray; }
+}
 
 fn utf16cs(value: &str) -> Vec<u16> {
 	let mut encoded = Vec::with_capacity(value.len() + 1);
@@ -76,20 +76,16 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 
 #[inline]
 pub fn notify_setup(app_id: &str) -> bool {
-	#[cfg(feature = "winrt-toast")] {
-		toast::setup(app_id)
-	}
-	#[cfg(not(feature = "winrt-toast"))] {
-		tray::setup(app_id)
+	cfg_select! {
+		feature = "winrt-toast" => toast::setup(app_id),
+		_ => tray::setup(app_id),
 	}
 }
 
 #[inline]
 pub fn notify(p: &Notification<'_>) {
-	#[cfg(feature = "winrt-toast")] {
-		toast::notify(p)
-	}
-	#[cfg(not(feature = "winrt-toast"))] {
-		tray::notify(p)
+	cfg_select! {
+		feature = "winrt-toast" => toast::notify(p),
+		_ => tray::notify(p),
 	}
 }

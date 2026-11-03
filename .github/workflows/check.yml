@@ -5,6 +5,19 @@ on:
   pull_request:
 
 jobs:
+  msrv:
+    name: Check MSRV (1.95)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.95.0
+
+      - name: Cargo check
+        run: cargo check --lib
+
   check:
     name: Check (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -15,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -32,8 +45,33 @@ jobs:
       - name: Cargo check
         run: cargo check
 
-      - name: Cargo check examples
+      - name: Cargo check examples (default backend)
         run: cargo check --examples
 
-      - name: Cargo check (optional features)
+      - name: Cargo check examples (GTK3)
+        if: runner.os == 'Linux'
+        run: cargo check --examples --features gtk3
+
+      - name: Cargo check examples (GTK4)
+        if: runner.os == 'Linux'
+        run: cargo check --examples --features gtk4
+
+      - name: Cargo check examples (XDG portal)
+        if: runner.os == 'Linux'
+        run: cargo check --examples --features xdg-portal
+
+      - name: Cargo check examples (libnotify)
+        if: runner.os == 'Linux'
+        run: cargo check --examples --features libnotify
+
+      - name: Cargo check examples (combined Linux features)
+        if: runner.os == 'Linux'
         run: cargo check --examples --all-features
+
+      - name: Cargo check examples (WinRT toast)
+        if: runner.os == 'Windows'
+        run: cargo check --examples --features winrt-toast
+
+      - name: Cargo check examples (AppKit)
+        if: runner.os == 'macOS'
+        run: cargo check --examples --features appkit

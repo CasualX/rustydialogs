@@ -1,16 +1,18 @@
 use super::*;
 
 unsafe fn style_response_button(dialog: *mut gtk4_sys::GtkDialog, response: i32) {
-	let button = gtk4_sys::gtk_dialog_get_widget_for_response(dialog, response);
-	if button.is_null() {
-		return;
-	}
+	unsafe {
+		let button = gtk4_sys::gtk_dialog_get_widget_for_response(dialog, response);
+		if button.is_null() {
+			return;
+		}
 
-	gtk4_sys::gtk_widget_set_size_request(button, 110, -1);
-	gtk4_sys::gtk_widget_set_margin_start(button, 6);
-	gtk4_sys::gtk_widget_set_margin_end(button, 6);
-	gtk4_sys::gtk_widget_set_margin_top(button, 8);
-	gtk4_sys::gtk_widget_set_margin_bottom(button, 8);
+		gtk4_sys::gtk_widget_set_size_request(button, 110, -1);
+		gtk4_sys::gtk_widget_set_margin_start(button, 6);
+		gtk4_sys::gtk_widget_set_margin_end(button, 6);
+		gtk4_sys::gtk_widget_set_margin_top(button, 8);
+		gtk4_sys::gtk_widget_set_margin_bottom(button, 8);
+	}
 }
 
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {

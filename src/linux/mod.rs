@@ -47,49 +47,43 @@ static BACKEND: sync::LazyLock<Backend> = sync::LazyLock::new(|| {
 		}
 	}
 
-	#[allow(unreachable_code)]
-	#[cfg(feature = "gtk4")] {
-		return Backend::Gtk4;
-	}
-
-	#[allow(unreachable_code)]
-	#[cfg(feature = "gtk3")] {
-		return Backend::Gtk3;
-	}
-
-	#[allow(unreachable_code)] {
-		let desktop = env::var("XDG_CURRENT_DESKTOP").or_else(|_| env::var("DESKTOP_SESSION")).ok();
-		let preferred_programs = if let Some(desktop) = desktop {
-			if desktop.contains("gnome") {
-				[Backend::Zenity, Backend::KDialog]
+	cfg_select! {
+		feature = "gtk4" => Backend::Gtk4,
+		feature = "gtk3" => Backend::Gtk3,
+		_ => {
+			let desktop = env::var("XDG_CURRENT_DESKTOP").or_else(|_| env::var("DESKTOP_SESSION")).ok();
+			let preferred_programs = if let Some(desktop) = desktop {
+				if desktop.contains("gnome") {
+					[Backend::Zenity, Backend::KDialog]
+				}
+				else if desktop.contains("kde") || desktop.contains("plasma") {
+					[Backend::KDialog, Backend::Zenity]
+				}
+				else {
+					[Backend::Zenity, Backend::KDialog]
+				}
 			}
-			else if desktop.contains("kde") || desktop.contains("plasma") {
-				[Backend::KDialog, Backend::Zenity]
+			else if env::var_os("GNOME_DESKTOP_SESSION_ID").is_some() {
+				[Backend::Zenity, Backend::KDialog]
 			}
 			else {
-				[Backend::Zenity, Backend::KDialog]
-			}
-		}
-		else if env::var_os("GNOME_DESKTOP_SESSION_ID").is_some() {
-			[Backend::Zenity, Backend::KDialog]
-		}
-		else {
-			[Backend::KDialog, Backend::Zenity]
-		};
-
-		// Run 'which program' for each program and return the first one that exists.
-		for &backend in &preferred_programs {
-			let program = match backend {
-				Backend::KDialog => "kdialog",
-				Backend::Zenity => "zenity",
-				#[allow(unreachable_patterns)]
-				_ => continue,
+				[Backend::KDialog, Backend::Zenity]
 			};
-			if process::Command::new("which").arg(program).output().map(|output| output.status.success()).unwrap_or(false) {
-				return backend;
+
+			// Run 'which program' for each program and return the first one that exists.
+			for &backend in &preferred_programs {
+				let program = match backend {
+					Backend::KDialog => "kdialog",
+					Backend::Zenity => "zenity",
+					#[allow(unreachable_patterns)]
+					_ => continue,
+				};
+				if process::Command::new("which").arg(program).output().map(|output| output.status.success()).unwrap_or(false) {
+					return backend;
+				}
 			}
+			panic!("No supported dialog backend found. Please install kdialog or zenity, or set RUSTY_DIALOGS_BACKEND to a supported backend.");
 		}
-		panic!("No supported dialog backend found. Please install kdialog or zenity, or set RUSTY_DIALOGS_BACKEND to a supported backend.");
 	}
 });
 
@@ -200,11 +194,9 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 
 #[inline]
 pub fn notify_setup(app_id: &str) -> bool {
-	#[cfg(feature = "libnotify")] {
-		notify::init(app_id)
-	}
-	#[cfg(not(feature = "libnotify"))] {
-		!app_id.is_empty()
+	cfg_select! {
+		feature = "libnotify" => notify::init(app_id),
+		_ => !app_id.is_empty(),
 	}
 }
 
@@ -214,15 +206,15 @@ pub fn notify(p: &Notification<'_>) {
 	}
 
 	match *BACKEND {
-		#[cfg(feature = "libnotify")]
-		Backend::KDialog => notify::notify(p),
-		#[cfg(not(feature = "libnotify"))]
-		Backend::KDialog => kdialog::notify(p),
+		Backend::KDialog => cfg_select! {
+			feature = "libnotify" => notify::notify(p),
+			_ => kdialog::notify(p),
+		},
 
-		#[cfg(feature = "libnotify")]
-		Backend::Zenity => notify::notify(p),
-		#[cfg(not(feature = "libnotify"))]
-		Backend::Zenity => zenity::notify(p),
+		Backend::Zenity => cfg_select! {
+			feature = "libnotify" => notify::notify(p),
+			_ => zenity::notify(p),
+		},
 
 		#[cfg(feature = "xdg-portal")]
 		Backend::XdgPortal => xdg_portal::notify(p),

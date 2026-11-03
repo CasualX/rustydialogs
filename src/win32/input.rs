@@ -80,56 +80,58 @@ pub fn text_input(p: &TextInput<'_>) -> Option<String> {
 /// Re-layout all controls to fill the client area, anchoring the edit box to
 /// all four sides and the buttons to the bottom-right corner.
 unsafe fn layout_controls(hwnd: HWND, multiline: bool, message_height: i32) {
-	let mut rc = RECT::default();
-	let _ = GetClientRect(hwnd, &mut rc);
-	let w = rc.right - rc.left;
-	let h = rc.bottom - rc.top;
+	unsafe {
+		let mut rc = RECT::default();
+		let _ = GetClientRect(hwnd, &mut rc);
+		let w = rc.right - rc.left;
+		let h = rc.bottom - rc.top;
 
-	// Label — anchored top-left/right
-	let label_hwnd = GetDlgItem(Some(hwnd), LABEL_ID);
-	if let Ok(lw) = label_hwnd {
-		let _ = MoveWindow(
-			lw,
-			MARGIN,
-			MARGIN,
-			w - 2 * MARGIN,
-			message_height,
-			true,
-		);
-	}
+		// Label — anchored top-left/right
+		let label_hwnd = GetDlgItem(Some(hwnd), LABEL_ID);
+		if let Ok(lw) = label_hwnd {
+			let _ = MoveWindow(
+				lw,
+				MARGIN,
+				MARGIN,
+				w - 2 * MARGIN,
+				message_height,
+				true,
+			);
+		}
 
-	// Buttons — anchored bottom-right
-	let btn_y = h - MARGIN - BUTTON_H;
-	let cancel_x = w - MARGIN - BUTTON_W;
-	let ok_x = cancel_x - BUTTON_GAP - BUTTON_W;
+		// Buttons — anchored bottom-right
+		let btn_y = h - MARGIN - BUTTON_H;
+		let cancel_x = w - MARGIN - BUTTON_W;
+		let ok_x = cancel_x - BUTTON_GAP - BUTTON_W;
 
-	let ok_hwnd = GetDlgItem(Some(hwnd), IDOK.0);
-	if let Ok(ow) = ok_hwnd {
-		let _ = MoveWindow(ow, ok_x, btn_y, BUTTON_W, BUTTON_H, true);
-	}
+		let ok_hwnd = GetDlgItem(Some(hwnd), IDOK.0);
+		if let Ok(ow) = ok_hwnd {
+			let _ = MoveWindow(ow, ok_x, btn_y, BUTTON_W, BUTTON_H, true);
+		}
 
-	let cancel_hwnd = GetDlgItem(Some(hwnd), IDCANCEL.0);
-	if let Ok(cw) = cancel_hwnd {
-		let _ = MoveWindow(cw, cancel_x, btn_y, BUTTON_W, BUTTON_H, true);
-	}
+		let cancel_hwnd = GetDlgItem(Some(hwnd), IDCANCEL.0);
+		if let Ok(cw) = cancel_hwnd {
+			let _ = MoveWindow(cw, cancel_x, btn_y, BUTTON_W, BUTTON_H, true);
+		}
 
-	// Edit box — anchored to all four sides
-	let edit_top = MARGIN + message_height + LABEL_GAP;
-	let edit_hwnd = GetDlgItem(Some(hwnd), EDIT_ID);
-	if let Ok(ew) = edit_hwnd {
-		let edit_h = if multiline {
-			btn_y - edit_top - MARGIN
-		} else {
-			EDIT_H_SINGLE
-		};
-		let _ = MoveWindow(
-			ew,
-			MARGIN,
-			edit_top,
-			w - 2 * MARGIN,
-			edit_h.max(EDIT_H_SINGLE),
-			true,
-		);
+		// Edit box — anchored to all four sides
+		let edit_top = MARGIN + message_height + LABEL_GAP;
+		let edit_hwnd = GetDlgItem(Some(hwnd), EDIT_ID);
+		if let Ok(ew) = edit_hwnd {
+			let edit_h = if multiline {
+				btn_y - edit_top - MARGIN
+			} else {
+				EDIT_H_SINGLE
+			};
+			let _ = MoveWindow(
+				ew,
+				MARGIN,
+				edit_top,
+				w - 2 * MARGIN,
+				edit_h.max(EDIT_H_SINGLE),
+				true,
+			);
+		}
 	}
 }
 
@@ -139,93 +141,95 @@ unsafe extern "system" fn input_dialog_proc(
 	wparam: WPARAM,
 	lparam: LPARAM,
 ) -> isize {
-	match msg {
-		WM_INITDIALOG => {
-			let state_ptr = lparam.0 as *mut InputDialogState;
-			SetWindowLongPtrW(hwnd, GWLP_USERDATA, state_ptr as isize);
-			if !state_ptr.is_null() {
-				let _ = SetDlgItemTextW(hwnd, LABEL_ID, PCWSTR((*state_ptr).message.as_ptr()));
-				let _ = SetDlgItemTextW(hwnd, EDIT_ID, PCWSTR((*state_ptr).initial.as_ptr()));
-				// Move caret to end of initial text
-				let edit_hwnd = GetDlgItem(Some(hwnd), EDIT_ID);
-				if let Ok(ew) = edit_hwnd {
-					SendMessageW(ew, 0x00B1 /*EM_SETSEL*/, Some(WPARAM(usize::MAX)), Some(LPARAM(-1)));
+	unsafe {
+		match msg {
+			WM_INITDIALOG => {
+				let state_ptr = lparam.0 as *mut InputDialogState;
+				SetWindowLongPtrW(hwnd, GWLP_USERDATA, state_ptr as isize);
+				if !state_ptr.is_null() {
+					let _ = SetDlgItemTextW(hwnd, LABEL_ID, PCWSTR((*state_ptr).message.as_ptr()));
+					let _ = SetDlgItemTextW(hwnd, EDIT_ID, PCWSTR((*state_ptr).initial.as_ptr()));
+					// Move caret to end of initial text
+					let edit_hwnd = GetDlgItem(Some(hwnd), EDIT_ID);
+					if let Ok(ew) = edit_hwnd {
+						SendMessageW(ew, 0x00B1 /*EM_SETSEL*/, Some(WPARAM(usize::MAX)), Some(LPARAM(-1)));
+					}
+					layout_controls(hwnd, (*state_ptr).multiline, (*state_ptr).message_height);
+					// For single-line mode, snapshot the window height so we can lock it.
+					if !(*state_ptr).multiline {
+						let mut wr = RECT::default();
+						let _ = GetWindowRect(hwnd, &mut wr);
+						(*state_ptr).fixed_height = wr.bottom - wr.top;
+					}
 				}
-				layout_controls(hwnd, (*state_ptr).multiline, (*state_ptr).message_height);
-				// For single-line mode, snapshot the window height so we can lock it.
-				if !(*state_ptr).multiline {
-					let mut wr = RECT::default();
-					let _ = GetWindowRect(hwnd, &mut wr);
-					(*state_ptr).fixed_height = wr.bottom - wr.top;
-				}
+				1
 			}
-			1
-		}
-		WM_SIZE => {
-			let state_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut InputDialogState;
-			if !state_ptr.is_null() {
-				layout_controls(hwnd, (*state_ptr).multiline, (*state_ptr).message_height);
-			}
-			0
-		}
-		WM_GETMINMAXINFO => {
-			let state_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut InputDialogState;
-			let mmi = lparam.0 as *mut MINMAXINFO;
-			if !mmi.is_null() {
-				let message_height = if !state_ptr.is_null() {
-					(*state_ptr).message_height
-				} else {
-					LABEL_H
-				};
-				let extra_height = (message_height - LABEL_H).max(0);
-				let multiline = !state_ptr.is_null() && (*state_ptr).multiline;
-				let min_h = if multiline {
-					MIN_HEIGHT_MULTI + extra_height
-				} else {
-					MIN_HEIGHT_SINGLE + extra_height
-				};
-				(*mmi).ptMinTrackSize.x = MIN_WIDTH;
-				(*mmi).ptMinTrackSize.y = min_h;
-				// Single-line: lock height to exactly the initial window height
-				if !multiline {
-					let fixed_h = if !state_ptr.is_null() && (*state_ptr).fixed_height > 0 {
-						(*state_ptr).fixed_height
-					} else {
-						min_h
-					};
-					(*mmi).ptMinTrackSize.y = fixed_h;
-					(*mmi).ptMaxTrackSize.y = fixed_h;
-				}
-			}
-			0
-		}
-		WM_COMMAND => {
-			let command_id = (wparam.0 & 0xFFFF) as i32;
-			if command_id == IDOK.0 {
+			WM_SIZE => {
 				let state_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut InputDialogState;
 				if !state_ptr.is_null() {
-					let mut buffer = [0u16; 32768];
-					let length = GetDlgItemTextW(hwnd, EDIT_ID, &mut buffer) as usize;
-					let text = String::from_utf16_lossy(&buffer[..length]);
-					let text = if (*state_ptr).multiline {
-						text.replace("\r\n", "\n")
-					} else {
-						text
-					};
-					(*state_ptr).result = Some(text);
+					layout_controls(hwnd, (*state_ptr).multiline, (*state_ptr).message_height);
 				}
-				let _ = EndDialog(hwnd, IDOK.0 as isize);
-				return 1;
+				0
 			}
-
-			if command_id == IDCANCEL.0 {
-				let _ = EndDialog(hwnd, IDCANCEL.0 as isize);
-				return 1;
+			WM_GETMINMAXINFO => {
+				let state_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut InputDialogState;
+				let mmi = lparam.0 as *mut MINMAXINFO;
+				if !mmi.is_null() {
+					let message_height = if !state_ptr.is_null() {
+						(*state_ptr).message_height
+					} else {
+						LABEL_H
+					};
+					let extra_height = (message_height - LABEL_H).max(0);
+					let multiline = !state_ptr.is_null() && (*state_ptr).multiline;
+					let min_h = if multiline {
+						MIN_HEIGHT_MULTI + extra_height
+					} else {
+						MIN_HEIGHT_SINGLE + extra_height
+					};
+					(*mmi).ptMinTrackSize.x = MIN_WIDTH;
+					(*mmi).ptMinTrackSize.y = min_h;
+					// Single-line: lock height to exactly the initial window height
+					if !multiline {
+						let fixed_h = if !state_ptr.is_null() && (*state_ptr).fixed_height > 0 {
+							(*state_ptr).fixed_height
+						} else {
+							min_h
+						};
+						(*mmi).ptMinTrackSize.y = fixed_h;
+						(*mmi).ptMaxTrackSize.y = fixed_h;
+					}
+				}
+				0
 			}
+			WM_COMMAND => {
+				let command_id = (wparam.0 & 0xFFFF) as i32;
+				if command_id == IDOK.0 {
+					let state_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut InputDialogState;
+					if !state_ptr.is_null() {
+						let mut buffer = [0u16; 32768];
+						let length = GetDlgItemTextW(hwnd, EDIT_ID, &mut buffer) as usize;
+						let text = String::from_utf16_lossy(&buffer[..length]);
+						let text = if (*state_ptr).multiline {
+							text.replace("\r\n", "\n")
+						} else {
+							text
+						};
+						(*state_ptr).result = Some(text);
+					}
+					let _ = EndDialog(hwnd, IDOK.0 as isize);
+					return 1;
+				}
 
-			0
+				if command_id == IDCANCEL.0 {
+					let _ = EndDialog(hwnd, IDCANCEL.0 as isize);
+					return 1;
+				}
+
+				0
+			}
+			_ => 0,
 		}
-		_ => 0,
 	}
 }
 

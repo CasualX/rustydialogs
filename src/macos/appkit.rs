@@ -395,7 +395,8 @@ pub fn color_picker(p: &ColorPicker<'_>) -> Option<ColorValue> {
 			return None;
 		}
 
-		nscolor_to_color_value(&well.color())
+		let color = well.color();
+		nscolor_to_color_value(&color)
 	})
 }
 

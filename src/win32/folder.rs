@@ -47,7 +47,7 @@ unsafe extern "system" fn folder_browse_callback(hwnd: HWND, message: u32, _lpar
 	if message == BFFM_INITIALIZED {
 		let directory = p.path.map(|path| utf16cs(&path.to_string_lossy()));
 		let lparam = directory.as_ref().map(|dir| LPARAM(dir.as_ptr().expose_provenance() as isize));
-		let _ = SendMessageW(hwnd, BFFM_SETSELECTIONW, Some(WPARAM(1)), lparam);
+		let _ = unsafe { SendMessageW(hwnd, BFFM_SETSELECTIONW, Some(WPARAM(1)), lparam) };
 	}
 	return 0;
 }

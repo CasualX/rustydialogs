@@ -113,9 +113,11 @@ unsafe extern "C" fn on_dialog_response(
 	response: i32,
 	user_data: *mut c_void,
 ) {
-	let state = &mut *(user_data as *mut ResponseState);
-	state.response = response;
-	g_main_loop_quit(state.loop_);
+	unsafe {
+		let state = &mut *(user_data as *mut ResponseState);
+		state.response = response;
+		g_main_loop_quit(state.loop_);
+	}
 }
 
 unsafe extern "C" fn on_native_dialog_response(
@@ -123,9 +125,11 @@ unsafe extern "C" fn on_native_dialog_response(
 	response: i32,
 	user_data: *mut c_void,
 ) {
-	let state = &mut *(user_data as *mut ResponseState);
-	state.response = response;
-	g_main_loop_quit(state.loop_);
+	unsafe {
+		let state = &mut *(user_data as *mut ResponseState);
+		state.response = response;
+		g_main_loop_quit(state.loop_);
+	}
 }
 
 fn run_dialog(dialog: *mut gtk4_sys::GtkDialog) -> i32 {

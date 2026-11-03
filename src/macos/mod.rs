@@ -1,11 +1,12 @@
 use super::*;
 
-#[cfg(feature = "appkit")]
-mod appkit;
-#[cfg(feature = "appkit")]
-pub use appkit::*;
-
-#[cfg(not(feature = "appkit"))]
-mod osascript;
-#[cfg(not(feature = "appkit"))]
-pub use osascript::*;
+cfg_select! {
+	feature = "appkit" => {
+		mod appkit;
+		pub use appkit::*;
+	}
+	_ => {
+		mod osascript;
+		pub use osascript::*;
+	}
+}
