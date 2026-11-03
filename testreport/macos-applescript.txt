@@ -1,0 +1,655 @@
+macOS AppleScript backend testing — 2026-11-03
+macOS Sonoma 14.8.9 (23J631), x86_64, QEMU/KVM
+Rust/cargo 1.99.1; Command Line Tools for Xcode 16.2
+Default features; appkit disabled; RUSTY_DIALOGS_BACKEND unset
+
+See ../testreport.md for interpretation and platform limitations.
+
+VERIFICATION
+cargo test --lib: 5 passed, 0 failed
+cargo check --examples: passed (native macOS)
+cargo build --examples: passed (native macOS)
+cargo check --examples --target=aarch64-apple-darwin: passed (Linux cross-check)
+
+MESSAGEBOX FINAL ACTION RECORD
+All 48 steps were attempted; 32 actual button clicks passed.
+Eight Escape actions returned Some(Cancel), allowed by the public API.
+Eight dialogs without Cancel could not be dismissed with Escape, Cmd-Period,
+or Cmd-W. External SIGTERM was used solely to continue the runner.
+Their raw PASS lines below must NOT be interpreted as successful UI dismissals.
+
+Step 1: Info / Ok / OK
+Action: button click
+Press OK.
+  Buttons: Ok
+  Icon: Info
+  Result: PASS
+
+Step 2: Info / Ok / DISMISS
+Action: external SIGTERM (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: Ok
+  Icon: Info
+  Result: PASS
+
+Step 3: Info / OkCancel / OK
+Action: button click
+Press OK.
+  Buttons: OkCancel
+  Icon: Info
+  Result: PASS
+
+Step 4: Info / OkCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: OkCancel
+  Icon: Info
+  Result: PASS
+
+Step 5: Info / OkCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Info
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Step 6: Info / YesNo / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNo
+  Icon: Info
+  Result: PASS
+
+Step 7: Info / YesNo / No
+Action: button click
+Press No.
+  Buttons: YesNo
+  Icon: Info
+  Result: PASS
+
+Step 8: Info / YesNo / DISMISS
+Action: external SIGTERM (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Info
+  Result: PASS
+
+Step 9: Info / YesNoCancel / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: PASS
+
+Step 10: Info / YesNoCancel / No
+Action: button click
+Press No.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: PASS
+
+Step 11: Info / YesNoCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: PASS
+
+Step 12: Info / YesNoCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Info
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Testing Icon: Warning
+
+Step 13: Warning / Ok / OK
+Action: button click
+Press OK.
+  Buttons: Ok
+  Icon: Warning
+  Result: PASS
+
+Step 14: Warning / Ok / DISMISS
+Action: external SIGTERM (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: Ok
+  Icon: Warning
+  Result: PASS
+
+Step 15: Warning / OkCancel / OK
+Action: button click
+Press OK.
+  Buttons: OkCancel
+  Icon: Warning
+  Result: PASS
+
+Step 16: Warning / OkCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: OkCancel
+  Icon: Warning
+  Result: PASS
+
+Step 17: Warning / OkCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Warning
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Step 18: Warning / YesNo / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNo
+  Icon: Warning
+  Result: PASS
+
+Step 19: Warning / YesNo / No
+Action: button click
+Press No.
+  Buttons: YesNo
+  Icon: Warning
+  Result: PASS
+
+Step 20: Warning / YesNo / DISMISS
+Action: external SIGTERM (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Warning
+  Result: PASS
+
+Step 21: Warning / YesNoCancel / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: PASS
+
+Step 22: Warning / YesNoCancel / No
+Action: button click
+Press No.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: PASS
+
+Step 23: Warning / YesNoCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: PASS
+
+Step 24: Warning / YesNoCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Warning
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Testing Icon: Error
+
+Step 25: Error / Ok / OK
+Action: button click
+Press OK.
+  Buttons: Ok
+  Icon: Error
+  Result: PASS
+
+Step 26: Error / Ok / DISMISS
+Action: external SIGTERM (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: Ok
+  Icon: Error
+  Result: PASS
+
+Step 27: Error / OkCancel / OK
+Action: button click
+Press OK.
+  Buttons: OkCancel
+  Icon: Error
+  Result: PASS
+
+Step 28: Error / OkCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: OkCancel
+  Icon: Error
+  Result: PASS
+
+Step 29: Error / OkCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Error
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Step 30: Error / YesNo / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNo
+  Icon: Error
+  Result: PASS
+
+Step 31: Error / YesNo / No
+Action: button click
+Press No.
+  Buttons: YesNo
+  Icon: Error
+  Result: PASS
+
+Step 32: Error / YesNo / DISMISS
+Action: external SIGTERM (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Error
+  Result: PASS
+
+Step 33: Error / YesNoCancel / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: PASS
+
+Step 34: Error / YesNoCancel / No
+Action: button click
+Press No.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: PASS
+
+Step 35: Error / YesNoCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: PASS
+
+Step 36: Error / YesNoCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Error
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Testing Icon: Question
+
+Step 37: Question / Ok / OK
+Action: button click
+Press OK.
+  Buttons: Ok
+  Icon: Question
+  Result: PASS
+
+Step 38: Question / Ok / DISMISS
+Action: external SIGTERM (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: Ok
+  Icon: Question
+  Result: PASS
+
+Step 39: Question / OkCancel / OK
+Action: button click
+Press OK.
+  Buttons: OkCancel
+  Icon: Question
+  Result: PASS
+
+Step 40: Question / OkCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: OkCancel
+  Icon: Question
+  Result: PASS
+
+Step 41: Question / OkCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: OkCancel
+  Icon: Question
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Step 42: Question / YesNo / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNo
+  Icon: Question
+  Result: PASS
+
+Step 43: Question / YesNo / No
+Action: button click
+Press No.
+  Buttons: YesNo
+  Icon: Question
+  Result: PASS
+
+Step 44: Question / YesNo / DISMISS
+Action: external SIGTERM (UI dismissal unavailable)
+Dismiss the dialog.
+  Buttons: YesNo
+  Icon: Question
+  Result: PASS
+
+Step 45: Question / YesNoCancel / Yes
+Action: button click
+Press Yes.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: PASS
+
+Step 46: Question / YesNoCancel / No
+Action: button click
+Press No.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: PASS
+
+Step 47: Question / YesNoCancel / Cancel
+Action: button click
+Press Cancel.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: PASS
+
+Step 48: Question / YesNoCancel / DISMISS
+Action: esc
+Dismiss the dialog.
+  Buttons: YesNoCancel
+  Icon: Question
+  Result: FAIL - expected None, got Some(Cancel)
+  Marked as failed.
+
+Failures: 8
+
+
+===== open-baseline =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing OpenFileDialog ====
+
+Step: Select `Cargo.toml` and press Open.
+  Result: PASS
+
+Step: Select multiple files (`Cargo.toml` and `readme.md`) and press Open.
+  Result: FAIL - expected Some(["/Users/tester/rustydialogs/Cargo.toml", "/Users/tester/rustydialogs/readme.md"]), got None
+  Marked as failed.
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+Failures: 1
+
+
+===== text-edge-baseline =====
+CASE: text-edge
+expected: Some("café Ω \"quoted\" \\ \t\r\n\n")
+actual: Some("café Ω \"quoted\" \\ \t")
+MATCH: false
+
+
+===== file-edge-baseline =====
+CASE: file-edge
+expected: "/Users/tester/applescript-testing/fixtures/files/a\nb.txt\n"
+actual: Some("/Users/tester/applescript-testing/fixtures/files/a")
+MATCH: false
+
+
+===== folders-edge-baseline =====
+CASE: folders-edge
+expected: ["/Users/tester/applescript-testing/fixtures/folders/first\nfolder", "/Users/tester/applescript-testing/fixtures/folders/second\"β\n"]
+actual: Some(["/Users/tester/applescript-testing/fixtures/folders/first", "folder/"])
+MATCH: false
+
+
+===== notifications-baseline =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing Notification ====
+
+Step: Confirm Info appeared.
+Confirm notification? [Y/n]:   Result: FAIL
+
+Step: Confirm Warning appeared.
+Confirm notification? [Y/n]:   Result: PASS
+
+Step: Confirm Error appeared.
+Confirm notification? [Y/n]:   Result: PASS
+
+Step: Confirm Question appeared.
+Confirm notification? [Y/n]:   Result: PASS
+
+Failures: 1
+
+
+===== open-final-v3 =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing OpenFileDialog ====
+
+Step: Select `Cargo.toml` and press Open.
+  Result: PASS
+
+Step: Select multiple files (`Cargo.toml` and `readme.md`) and press Open.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+All requested steps passed.
+
+
+===== save-final =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing SaveFileDialog ====
+
+Step: Select `readme.md` and press Save.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+All requested steps passed.
+
+
+===== folder-final =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing FolderDialog ====
+
+Step: Select the `src` folder and press Open.
+  Result: PASS
+
+Step: Select multiple folders (`src` and `examples`) and press Open.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+All requested steps passed.
+
+
+===== text-final =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing TextInput ====
+
+Step: Enter `Hello, Rust!` and press OK.
+  Result: PASS
+
+Step: Enter `Password123` and press OK.
+  Result: PASS
+
+Step: Enter these three lines and press OK.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+All requested steps passed.
+
+
+===== color-final =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing ColorPicker ====
+
+Step: Select pure RED (#FF0000) and press OK.
+  Result: PASS
+
+Step: Select specific color (#4FB3A3) (79, 179, 163) and press OK.
+  Result: PASS
+
+Step: Dismiss the dialog.
+  Result: PASS
+
+All requested steps passed.
+
+
+===== notifications-final =====
+
+Environment
+  OS: macos
+  Arch: x86_64
+  RUSTY_DIALOGS_BACKEND: (not set)
+  rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+  cargo: cargo 1.99.1 (5f94df478 2026-08-27)
+
+==== Testing Notification ====
+
+Step: Confirm Info appeared.
+Confirm notification? [Y/n]:   Result: PASS
+
+Step: Confirm Warning appeared.
+Confirm notification? [Y/n]:   Result: PASS
+
+Step: Confirm Error appeared.
+Confirm notification? [Y/n]:   Result: PASS
+
+Step: Confirm Question appeared.
+Confirm notification? [Y/n]:   Result: PASS
+
+All requested steps passed.
+
+
+===== relative-folder-baseline =====
+CASE: relative-folder
+expected: "/Users/tester/rustydialogs/src"
+actual: Some("/Users/tester/rustydialogs/src/")
+MATCH: true
+
+
+===== text-edge-final =====
+CASE: text-edge
+expected: Some("café Ω \"quoted\" \\ \t\r\n\n")
+actual: Some("café Ω \"quoted\" \\ \t\r\n\n")
+MATCH: true
+
+
+===== file-edge-final =====
+CASE: file-edge
+expected: "/Users/tester/applescript-testing/fixtures/files/a\nb.txt\n"
+actual: Some("/Users/tester/applescript-testing/fixtures/files/a\nb.txt\n")
+MATCH: true
+
+
+===== files-edge-final =====
+CASE: files-edge
+expected: ["/Users/tester/applescript-testing/fixtures/files/a\nb.txt\n", "/Users/tester/applescript-testing/fixtures/files/β \"quoted\".txt"]
+actual: Some(["/Users/tester/applescript-testing/fixtures/files/a\nb.txt\n", "/Users/tester/applescript-testing/fixtures/files/β \"quoted\".txt"])
+MATCH: true
+
+
+===== folders-edge-final =====
+CASE: folders-edge
+expected: ["/Users/tester/applescript-testing/fixtures/folders/first\nfolder", "/Users/tester/applescript-testing/fixtures/folders/second\"β\n"]
+actual: Some(["/Users/tester/applescript-testing/fixtures/folders/first\nfolder/", "/Users/tester/applescript-testing/fixtures/folders/second\"β\n/"])
+MATCH: true
+
+
+===== notification-edge-final =====
+CASE: notification-edge
+Notification spawned; inspecting child lifetime.
+
+
+===== winit-final =====
+
+Rusty Dialogs + winit
+Focus the window, then press a key to open a native dialog owned by the winit window:
+  M = MessageBox
+  O = OpenFileDialog (single file)
+  A = OpenFileDialog (multiple files)
+  S = SaveFileDialog
+  F = FolderDialog (single folder)
+  G = FolderDialog (multiple folders)
+  C = ColorPicker
+  T = TextInput (single line)
+  P = TextInput (password)
+  L = TextInput (multi-line)
+  N = Notification
+  H = Print this help
+  Q or Esc = Quit
+ready
+message box -> Some(Yes)
+
+
+===== Notification child lifetime =====
+Before fix: completed osascript child observed as ZN <defunct> while caller alive.
+After fix: caller PID 4761 still SN (running/sleeping); pgrep -P 4761 returned
+no children after the notification appeared. No zombie child remained.
+Banner title -Literal "Ω", subtitle probe-id, Unicode and backslash intact.
+
+Baseline folder-name probe selected one newline-named folder; the split paths
+in its result are corruption, not two actual folder selections. The final
+probe explicitly selected both newline/quote/Unicode-named folders.

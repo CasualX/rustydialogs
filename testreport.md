@@ -104,3 +104,28 @@ cargo run --example tests --features winrt-toast -- n
 ```
 
 - _Notification_: The first notifications after setup are not shown because it takes some time for the app to be registered in the system. After that, notifications work fine.
+
+Host: macOS
+-----------
+
+### AppleScript
+
+Tested on macOS Sonoma 14.8.9 (x86_64, QEMU/KVM).
+
+```bash
+cargo run --example tests
+```
+
+- _MessageBox_: Pressing ESC returns `Some(Cancel)` when a Cancel button is present. OK-only and YesNo dialogs cannot be dismissed with ESC, Command-Period, or Command-W.
+
+- _MessageBox_: Question dialogs reuse the Info icon.
+
+- _FileDialog_: Open filters combine simple `*.extension` patterns into one restriction, without named groups or an All Files selector. Unsupported patterns leave the picker unrestricted. Save dialogs ignore filters.
+
+- _TextInput_: MultiLine uses the same field as SingleLine. Option-Return inserts a newline; Return accepts. Empty initial values produce a field one line high.
+
+- _ColorPicker_: The title is always "Colors".
+
+- _All dialogs_: The owner window is ignored.
+
+- _Notification_: Notifications appear with the Script Editor icon and `app_id` as the subtitle. Requested icons and durations are ignored; macOS settings control presentation. One notification was not observed during the initial run; all four appeared on repeat.

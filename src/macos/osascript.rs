@@ -37,7 +37,11 @@ on run argv
 	if theCancelButton is "" then
 		set response to display dialog theMessage with title theTitle buttons buttonList default button theDefaultButton with icon iconSpec
 	else
-		set response to display dialog theMessage with title theTitle buttons buttonList default button theDefaultButton cancel button theCancelButton with icon iconSpec
+		try
+			set response to display dialog theMessage with title theTitle buttons buttonList default button theDefaultButton cancel button theCancelButton with icon iconSpec
+		on error number -128
+			return theCancelButton
+		end try
 	end if
 
 	return button returned of response
@@ -68,31 +72,45 @@ fn pick_files_impl(p: &FileDialog<'_>, multiple: bool) -> Option<Vec<PathBuf>> {
 		.map(|path| path.to_string_lossy().into_owned())
 		.unwrap_or_default();
 
-	let script_single = r#"
+	let script = r#"
+use framework "Foundation"
+use scripting additions
+
 on run argv
 	set theTitle to item 1 of argv
 	set initialPath to item 2 of argv
-
-	if initialPath is "" then
-		set selectedFile to choose file with prompt theTitle
-	else
-		set selectedFile to choose file with prompt theTitle default location (POSIX file initialPath)
+	set allowMultiple to (item 3 of argv is "true")
+	set fileTypes to {}
+	if (count argv) > 3 then
+		try
+			-- Four-character extensions otherwise get interpreted as legacy file type codes.
+			set frameworkBundle to current application's NSBundle's bundleWithPath:"/System/Library/Frameworks/UniformTypeIdentifiers.framework"
+			if frameworkBundle is missing value then error "Type identifiers unavailable"
+			if not (frameworkBundle's load() as boolean) then error "Type identifiers unavailable"
+			repeat with extensionValue in items 4 thru -1 of argv
+				set fileType to current application's UTType's typeWithFilenameExtension:(extensionValue as text)
+				set end of fileTypes to fileType's identifier() as text
+			end repeat
+		on error
+			-- Older systems without UTType still get a usable, unrestricted picker.
+			set fileTypes to {}
+		end try
 	end if
 
-	return POSIX path of selectedFile
-end run
-"#;
-
-	let script_multi = r#"
-on run argv
-	set theTitle to item 1 of argv
-	set initialPath to item 2 of argv
-
 	if initialPath is "" then
-		set selectedFiles to choose file with prompt theTitle with multiple selections allowed true
+		if fileTypes is {} then
+			set selectedFiles to choose file with prompt theTitle multiple selections allowed allowMultiple
+		else
+			set selectedFiles to choose file with prompt theTitle of type fileTypes multiple selections allowed allowMultiple
+		end if
 	else
-		set selectedFiles to choose file with prompt theTitle default location (POSIX file initialPath) with multiple selections allowed true
+		if fileTypes is {} then
+			set selectedFiles to choose file with prompt theTitle default location (POSIX file initialPath as alias) multiple selections allowed allowMultiple
+		else
+			set selectedFiles to choose file with prompt theTitle of type fileTypes default location (POSIX file initialPath as alias) multiple selections allowed allowMultiple
+		end if
 	end if
+	if not allowMultiple then set selectedFiles to {selectedFiles}
 
 	set outputLines to {}
 	repeat with selectedFile in selectedFiles
@@ -100,21 +118,18 @@ on run argv
 	end repeat
 
 	set oldDelims to AppleScript's text item delimiters
-	set AppleScript's text item delimiters to linefeed
+	set AppleScript's text item delimiters to character id 0
 	set joined to outputLines as text
 	set AppleScript's text item delimiters to oldDelims
 	return joined
 end run
 "#;
 
-	let script = if multiple { script_multi } else { script_single };
-	let output = invoke_output(script, &[p.title, &initial_directory])?;
-
-	let paths = output.lines().map(PathBuf::from).collect::<Vec<_>>();
-	if paths.is_empty() {
-		return None;
-	}
-	Some(paths)
+	let file_types = filter_types(p.filters).unwrap_or_default();
+	let mut args = vec![p.title, &initial_directory, if multiple { "true" } else { "false" }];
+	args.extend(file_types.iter().map(String::as_str));
+	let output = invoke_output(script, &args)?;
+	parse_paths(&output)
 }
 
 pub fn save_file(p: &FileDialog<'_>) -> Option<PathBuf> {
@@ -204,7 +219,7 @@ on run argv
 	end repeat
 
 	set oldDelims to AppleScript's text item delimiters
-	set AppleScript's text item delimiters to linefeed
+	set AppleScript's text item delimiters to character id 0
 	set joined to outputLines as text
 	set AppleScript's text item delimiters to oldDelims
 	return joined
@@ -212,11 +227,7 @@ end run
 "#;
 
 	let output = invoke_output(script, &[p.title, initial_directory])?;
-	let paths = output.lines().filter(|line| !line.is_empty()).map(PathBuf::from).collect::<Vec<_>>();
-	if paths.is_empty() {
-		return None;
-	}
-	Some(paths)
+	parse_paths(&output)
 }
 
 pub fn text_input(p: &TextInput<'_>) -> Option<String> {
@@ -291,14 +302,15 @@ end run
 
 #[track_caller]
 fn invoke_output(script: &str, args: &[&str]) -> Option<String> {
-	let output = process::Command::new("osascript").arg("-e").arg(script).args(args).output().expect("failed to execute osascript");
+	let output = process::Command::new("osascript").arg("-e").arg(script).arg("--").args(args).output().expect("failed to execute osascript");
 
 	if !output.status.success() {
 		return None;
 	}
 
 	let mut stdout = String::from_utf8(output.stdout).expect("failed to parse stdout as UTF-8");
-	while stdout.ends_with('\n') || stdout.ends_with('\r') {
+	// osascript appends one linefeed; any other whitespace belongs to the result.
+	if stdout.ends_with('\n') {
 		stdout.pop();
 	}
 	Some(stdout)
@@ -306,7 +318,33 @@ fn invoke_output(script: &str, args: &[&str]) -> Option<String> {
 
 #[track_caller]
 fn invoke_async(script: &str, args: &[&str]) {
-	let _ = process::Command::new("osascript").arg("-e").arg(script).args(args).spawn().expect("failed to execute osascript");
+	let mut child = process::Command::new("osascript").arg("-e").arg(script).arg("--").args(args).spawn().expect("failed to execute osascript");
+	// Reap the helper without blocking the caller.
+	let _ = std::thread::spawn(move || { let _ = child.wait(); });
+}
+
+fn parse_paths(output: &str) -> Option<Vec<PathBuf>> {
+	// NUL cannot occur in a filesystem path; line breaks can.
+	let paths = output.split('\0').filter(|path| !path.is_empty()).map(PathBuf::from).collect::<Vec<_>>();
+	if paths.is_empty() { None } else { Some(paths) }
+}
+
+fn filter_types(filters: Option<&[FileFilter<'_>]>) -> Option<Vec<String>> {
+	let mut result = Vec::new();
+	for filter in filters? {
+		for pattern in filter.patterns {
+			// Standard Additions accepts extensions, not general glob patterns.
+			// Leave the picker unrestricted if any pattern cannot be represented.
+			let extension = pattern.strip_prefix("*.")?;
+			if extension.is_empty() || extension.contains(['*', '?', '[', ']', '{', '}', '/', '\\']) {
+				return None;
+			}
+			if !result.iter().any(|item| item == extension) {
+				result.push(extension.to_string());
+			}
+		}
+	}
+	if result.is_empty() { None } else { Some(result) }
 }
 
 fn initial_directory(initial_path: Option<&Path>) -> Option<PathBuf> {
@@ -342,4 +380,50 @@ fn parse_color(value: &str) -> Option<ColorValue> {
 		green: (green16 / 257) as u8,
 		blue: (blue16 / 257) as u8,
 	})
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	const ECHO: &str = "on run argv\nreturn item 1 of argv\nend run";
+
+	#[test]
+	fn script_arguments_are_literal() {
+		for value in ["-literal-title", "--", "café Ω \"quoted\" \\"] {
+			assert_eq!(invoke_output(ECHO, &[value]).as_deref(), Some(value));
+		}
+	}
+
+	#[test]
+	fn output_preserves_whitespace() {
+		for value in ["", "  text\t  ", "text\n", "text\r", "text\r\n\n"] {
+			assert_eq!(invoke_output(ECHO, &[value]).as_deref(), Some(value));
+		}
+	}
+
+	#[test]
+	fn path_results_preserve_line_breaks() {
+		let paths = ["/tmp/a\nb.txt\n", "/tmp/café \"quoted\"\r"];
+		let script = "on run argv\nset AppleScript's text item delimiters to character id 0\nreturn argv as text\nend run";
+		let output = invoke_output(script, &paths).unwrap();
+		assert_eq!(parse_paths(&output), Some(paths.map(PathBuf::from).to_vec()));
+		assert_eq!(parse_paths(""), None);
+	}
+
+	#[test]
+	fn extension_filters_are_combined() {
+		let filters = [FileFilter { name: "Sources", patterns: &["*.toml", "*.md", "*.toml"] }];
+		assert_eq!(filter_types(Some(&filters)), Some(vec!["toml".into(), "md".into()]));
+		assert_eq!(filter_types(None), None);
+		assert_eq!(filter_types(Some(&[])), None);
+	}
+
+	#[test]
+	fn unsupported_filters_leave_the_picker_unrestricted() {
+		for pattern in ["*", "*.*", "Cargo.toml", "data-*.txt", "*.t?xt", "*.[ch]"] {
+			let filters = [FileFilter { name: "Files", patterns: &["*.md", pattern] }];
+			assert_eq!(filter_types(Some(&filters)), None, "{pattern}");
+		}
+	}
 }
