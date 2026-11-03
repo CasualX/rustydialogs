@@ -12,6 +12,8 @@ Rusty Dialogs is a Rust library that provides a simple and cross-platform way to
 
 Requires Rust 1.95 or later (edition 2024).
 
+See [changelog.md](changelog.md) for release notes and migration details.
+
 Dialogs
 -------
 
